@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}iMarks{% endblock %}</title>
+    <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+    <link rel="icon" href="{% static 'favicon.png' %}" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Segoe UI', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        ios: '22%',
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-[radial-gradient(1200px_circle_at_20%_10%,#7dd3fc_0%,transparent_45%),radial-gradient(900px_circle_at_90%_20%,#c4b5fd_0%,transparent_40%),linear-gradient(180deg,#1e293b_0%,#0f172a_55%,#1e1b4b_100%)] font-sans text-white antialiased">
+    {% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Add bookmark · iMarks{% endblock %}
+
+{% block content %}
+<div class="mx-auto flex min-h-screen max-w-md flex-col px-4 py-6">
+    <header class="mb-8 flex items-center justify-between">
+        <h1 class="text-xl font-semibold">Add bookmark</h1>
+        <a href="{% url 'home' %}" class="text-sm text-white/80 hover:text-white">Cancel</a>
+    </header>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label class="block text-sm text-white/80">
+            Title
+            {{ form.title }}
+            {{ form.title.errors }}
+        </label>
+        <label class="block text-sm text-white/80">
+            URL
+            {{ form.url }}
+            {{ form.url.errors }}
+        </label>
+        <label class="block text-sm text-white/80">
+            Folder
+            {{ form.folder }}
+            {{ form.folder.errors }}
+        </label>
+        <button type="submit" class="w-full rounded-2xl bg-white py-3 font-semibold text-slate-900">Save</button>
+    </form>
+</div>
+{% endblock %}

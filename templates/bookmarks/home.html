@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
+    <header class="mb-8 flex items-center justify-between gap-3">
+        <h1 class="text-2xl font-semibold tracking-tight">iMarks</h1>
+        <div class="flex items-center gap-2 sm:gap-3">
+            <a href="{% url 'extract' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Extract</a>
+            <a href="{% url 'add_folder' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Folder</a>
+            <a href="{% url 'add_bookmark' %}" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl font-medium leading-none text-slate-900" aria-label="Add bookmark">+</a>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="rounded-full px-2 py-1.5 text-sm text-white/80 hover:text-white">Logout</button>
+            </form>
+        </div>
+    </header>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p class="mb-6 rounded-2xl bg-white/15 px-4 py-3 text-sm backdrop-blur">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <main class="grid grid-cols-4 gap-x-4 gap-y-6 md:grid-cols-8">
+        {% for bookmark in bookmarks %}
+            <a href="{{ bookmark.url }}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2" title="{{ bookmark.title }}">
+                <span class="flex aspect-square w-full max-w-[4.75rem] items-center justify-center rounded-ios shadow-sm sm:max-w-[5.5rem]"
+                      style="background-color: {{ bookmark.tile_color }}">
+                    {% if bookmark.icon_url %}
+                        <img src="{{ bookmark.icon_url }}" alt="" class="h-8 w-8 object-contain sm:h-10 sm:w-10"
+                            onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                        <span class="hidden text-lg font-semibold text-slate-700">{{ bookmark.title.0 }}</span>
+                    {% else %}
+                        <span class="text-lg font-semibold text-slate-700">{{ bookmark.title.0 }}</span>
+                    {% endif %}
+                </span>
+                <span class="w-full truncate text-center text-xs text-white/90">{{ bookmark.title }}</span>
+            </a>
+        {% empty %}
+            <p class="col-span-4 md:col-span-8 mt-16 text-center text-white/70">
+                No bookmarks yet. Tap + or Extract a Chrome / Google export.
+            </p>
+        {% endfor %}
+    </main>
+</div>
+{% endblock %}

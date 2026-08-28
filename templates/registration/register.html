@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Register · iMarks{% endblock %}
+
+{% block content %}
+<main class="flex min-h-screen items-center justify-center px-4 py-8">
+    <div class="w-full max-w-sm rounded-3xl bg-white/10 p-8 backdrop-blur-md">
+        <h1 class="text-2xl font-semibold">Create account</h1>
+        <p class="mb-6 mt-1 text-sm text-white/70">A request number is required to register.</p>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label class="block text-sm text-white/80">
+                Username
+                {{ form.username }}
+                {{ form.username.errors }}
+            </label>
+            <label class="block text-sm text-white/80">
+                Password
+                {{ form.password1 }}
+                {{ form.password1.errors }}
+            </label>
+            <label class="block text-sm text-white/80">
+                Confirm password
+                {{ form.password2 }}
+                {{ form.password2.errors }}
+            </label>
+            <label class="block text-sm text-white/80">
+                Request Number
+                {{ form.request_number }}
+                {{ form.request_number.errors }}
+            </label>
+            <button type="submit" class="w-full rounded-2xl bg-white py-3 font-semibold text-slate-900">Register</button>
+        </form>
+        <p class="mt-5 text-center text-sm text-white/70">
+            Already have an account? <a href="{% url 'login' %}" class="text-white underline">Sign in</a>
+        </p>
+    </div>
+</main>
+{% endblock %}

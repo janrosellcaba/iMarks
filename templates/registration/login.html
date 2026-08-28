@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in · iMarks{% endblock %}
+
+{% block content %}
+<main class="flex min-h-screen items-center justify-center px-4">
+    <div class="w-full max-w-sm rounded-3xl bg-white/10 p-8 backdrop-blur-md">
+        <h1 class="text-2xl font-semibold">iMarks</h1>
+        <p class="mb-6 mt-1 text-sm text-white/70">Sign in to your bookmarks</p>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <p class="text-sm text-rose-200">{{ form.non_field_errors.0 }}</p>
+            {% endif %}
+            <label class="block text-sm text-white/80">
+                Username
+                <input type="text" name="username" autocomplete="username" autofocus required
+                    value="{{ form.username.value|default:'' }}"
+                    class="mt-1 w-full rounded-2xl border-0 bg-white/90 px-4 py-3 text-slate-900 shadow-sm outline-none ring-1 ring-black/10">
+            </label>
+            <label class="block text-sm text-white/80">
+                Password
+                <input type="password" name="password" autocomplete="current-password" required
+                    class="mt-1 w-full rounded-2xl border-0 bg-white/90 px-4 py-3 text-slate-900 shadow-sm outline-none ring-1 ring-black/10">
+            </label>
+            <button type="submit" class="w-full rounded-2xl bg-white py-3 font-semibold text-slate-900">Sign in</button>
+        </form>
+        <p class="mt-5 text-center text-sm text-white/70">
+            New here? <a href="{% url 'register' %}" class="text-white underline">Create an account</a>
+        </p>
+    </div>
+</main>
+{% endblock %}
