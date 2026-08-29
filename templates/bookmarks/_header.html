@@ -5,15 +5,12 @@
            class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium {% if url_name == 'home' or url_name == 'folder' %}bg-white text-slate-900 shadow-sm{% else %}text-white/80 hover:bg-white/10 hover:text-white{% endif %}">Home</a>
         <a href="{% url 'export' %}"
            class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">Export</a>
-        <a href="{% url 'add_folder' %}"
-           class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium {% if url_name == 'add_folder' %}bg-white text-slate-900 shadow-sm{% else %}text-white/80 hover:bg-white/10 hover:text-white{% endif %}">Folder</a>
+        <a href="{% url 'folders' %}"
+           class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium {% if url_name == 'folders' or url_name == 'add_folder' or url_name == 'edit_folder' %}bg-white text-slate-900 shadow-sm{% else %}text-white/80 hover:bg-white/10 hover:text-white{% endif %}">Folder</a>
         <a href="{% url 'manage' %}"
            class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium {% if url_name == 'manage' %}bg-white text-slate-900 shadow-sm{% else %}text-white/80 hover:bg-white/10 hover:text-white{% endif %}">Manage</a>
     </nav>
     <div class="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-        {% if url_name == 'home' or url_name == 'folder' %}
-            <button type="button" id="titles-toggle" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25" aria-pressed="true">Titles</button>
-        {% endif %}
         <a href="{% url 'add_bookmark' %}{% if open_folder %}?folder={{ open_folder.pk }}{% endif %}" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl font-medium leading-none text-slate-900" aria-label="Add bookmark">+</a>
         <details class="relative">
             <summary class="cursor-pointer list-none rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">

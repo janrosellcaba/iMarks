@@ -102,6 +102,13 @@ def edit_bookmark(request, pk):
 
 
 @login_required
+def folders(request):
+    return render(request, 'bookmarks/folders.html', {
+        'folders': Folder.objects.filter(user=request.user).annotate(bookmark_count=Count('bookmarks')),
+    })
+
+
+@login_required
 def add_folder(request):
     if request.method == 'POST':
         form = FolderForm(request.POST)
@@ -110,7 +117,7 @@ def add_folder(request):
             folder.user = request.user
             folder.sort_order = next_home_sort(request.user)
             folder.save()
-            return redirect('home')
+            return redirect('folders')
     else:
         form = FolderForm()
     return render(request, 'bookmarks/folder_form.html', {
@@ -125,11 +132,11 @@ def edit_folder(request, pk):
     if request.method == 'POST':
         if request.POST.get('delete'):
             folder.delete()
-            return redirect('manage')
+            return redirect('folders')
         form = FolderForm(request.POST, instance=folder)
         if form.is_valid():
             form.save()
-            return redirect('manage')
+            return redirect('folders')
     else:
         form = FolderForm(instance=folder)
     return render(request, 'bookmarks/folder_form.html', {
@@ -141,7 +148,6 @@ def edit_folder(request, pk):
 @login_required
 def manage(request):
     return render(request, 'bookmarks/manage.html', {
-        'folders': Folder.objects.filter(user=request.user).annotate(bookmark_count=Count('bookmarks')),
         'bookmarks': Bookmark.objects.filter(user=request.user).select_related('folder'),
     })
 

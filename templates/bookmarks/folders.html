@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Folders · iMarks{% endblock %}
+
+{% block content %}
+<div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
+    {% include "bookmarks/_header.html" %}
+
+    <div class="mb-6 flex items-center justify-between gap-3">
+        <h1 class="text-sm font-medium uppercase tracking-wide text-white/60">Folders</h1>
+        <a href="{% url 'add_folder' %}" class="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-900">Add folder</a>
+    </div>
+
+    <ul class="space-y-2">
+        {% for item in folders %}
+            <li>
+                <a href="{% url 'edit_folder' item.pk %}" class="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 hover:bg-white/15">
+                    <span class="h-8 w-8 flex-shrink-0 rounded-xl" style="background-color: {{ item.color }}"></span>
+                    <span class="min-w-0 flex-1 truncate">{{ item.name }}</span>
+                    <span class="text-sm text-white/50">{{ item.bookmark_count }}</span>
+                </a>
+            </li>
+        {% empty %}
+            <li class="rounded-2xl bg-white/10 px-4 py-8 text-center text-sm text-white/60">
+                No folders yet. Tap Add folder to create one.
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

@@ -1,22 +1,5 @@
 (function () {
     const desktop = document.getElementById('home-desktop');
-    const titlesToggle = document.getElementById('titles-toggle');
-    if (titlesToggle) {
-        const shown = !document.documentElement.classList.contains('hide-titles');
-        titlesToggle.setAttribute('aria-pressed', shown ? 'true' : 'false');
-        titlesToggle.className = shown
-            ? 'rounded-full bg-white px-3 py-1.5 text-sm font-medium text-slate-900 shadow-sm'
-            : 'rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25';
-        titlesToggle.addEventListener('click', function () {
-            const hide = !document.documentElement.classList.contains('hide-titles');
-            document.documentElement.classList.toggle('hide-titles', hide);
-            try { localStorage.setItem('imarks-titles', hide ? '0' : '1'); } catch (error) {}
-            titlesToggle.setAttribute('aria-pressed', hide ? 'false' : 'true');
-            titlesToggle.className = hide
-                ? 'rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25'
-                : 'rounded-full bg-white px-3 py-1.5 text-sm font-medium text-slate-900 shadow-sm';
-        });
-    }
     if (!desktop) return;
 
     const arrangeUrl = desktop.dataset.arrangeUrl;

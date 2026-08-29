@@ -3,37 +3,40 @@
 {% block title %}{% if folder %}Edit folder{% else %}New folder{% endif %} · iMarks{% endblock %}
 
 {% block content %}
-<div class="mx-auto flex min-h-screen max-w-md flex-col px-4 py-6">
-    <header class="mb-8 flex items-center justify-between">
-        <h1 class="text-xl font-semibold">{% if folder %}Edit folder{% else %}New folder{% endif %}</h1>
-        <a href="{% if folder %}{% url 'manage' %}{% else %}{% url 'home' %}{% endif %}" class="text-sm text-white/80 hover:text-white">Cancel</a>
-    </header>
-    <form method="post" class="space-y-4">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <label class="block text-sm text-white/80">
-            Name
-            {{ form.name }}
-            {{ form.name.errors }}
-        </label>
-        <div>
-            <p class="mb-3 text-sm text-white/80">Color</p>
-            <div class="grid grid-cols-8 gap-3">
-                {% for value, label in form.color.field.choices %}
-                    <label class="cursor-pointer">
-                        <input type="radio" name="color" value="{{ value }}" class="peer sr-only"
-                            {% if form.color.value == value %}checked{% endif %} required>
-                        <span class="block h-9 w-9 rounded-full shadow-sm ring-2 ring-transparent ring-offset-2 ring-offset-slate-900 peer-checked:ring-white" style="background-color: {{ value }}"></span>
-                    </label>
-                {% endfor %}
+<div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
+    {% include "bookmarks/_header.html" %}
+    <div class="mx-auto max-w-md">
+        <header class="mb-8 flex items-center justify-between">
+            <h1 class="text-xl font-semibold">{% if folder %}Edit folder{% else %}New folder{% endif %}</h1>
+            <a href="{% url 'folders' %}" class="text-sm text-white/80 hover:text-white">Cancel</a>
+        </header>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label class="block text-sm text-white/80">
+                Name
+                {{ form.name }}
+                {{ form.name.errors }}
+            </label>
+            <div>
+                <p class="mb-3 text-sm text-white/80">Color</p>
+                <div class="grid grid-cols-8 gap-3">
+                    {% for value, label in form.color.field.choices %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="color" value="{{ value }}" class="peer sr-only"
+                                {% if form.color.value == value %}checked{% endif %} required>
+                            <span class="block h-9 w-9 rounded-full shadow-sm ring-2 ring-transparent ring-offset-2 ring-offset-slate-900 peer-checked:ring-white" style="background-color: {{ value }}"></span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {{ form.color.errors }}
             </div>
-            {{ form.color.errors }}
-        </div>
-        <button type="submit" class="w-full rounded-2xl bg-white py-3 font-semibold text-slate-900">Save</button>
-        {% if folder %}
-            <button type="submit" name="delete" value="1" class="w-full rounded-2xl bg-white/10 py-3 font-semibold text-rose-200"
-                onclick="return confirm('Delete this folder? Bookmarks inside it stay, unfiled.')">Delete</button>
-        {% endif %}
-    </form>
+            <button type="submit" class="w-full rounded-2xl bg-white py-3 font-semibold text-slate-900">Save</button>
+            {% if folder %}
+                <button type="submit" name="delete" value="1" class="w-full rounded-2xl bg-white/10 py-3 font-semibold text-rose-200"
+                    onclick="return confirm('Delete this folder? Bookmarks inside it stay, unfiled.')">Delete</button>
+            {% endif %}
+        </form>
+    </div>
 </div>
 {% endblock %}

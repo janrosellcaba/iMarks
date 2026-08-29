@@ -111,8 +111,14 @@ class BookmarkViewTests(TestCase):
         Folder.objects.create(user=self.user, name='Dev', color='#bae1ff')
         Bookmark.objects.create(user=self.user, title='Mine', url='https://example.com')
         response = self.client.get(reverse('manage'))
-        self.assertContains(response, 'Dev')
         self.assertContains(response, 'Mine')
+
+    def test_folders_page_lists_folders_and_add_button(self):
+        Folder.objects.create(user=self.user, name='Dev', color='#bae1ff')
+        response = self.client.get(reverse('folders'))
+        self.assertContains(response, 'Dev')
+        self.assertContains(response, 'Add folder')
+        self.assertContains(response, reverse('add_folder'))
 
     def test_add_bookmark_creates_row_and_favicon(self):
         response = self.client.post(reverse('add_bookmark'), {
@@ -156,7 +162,7 @@ class BookmarkViewTests(TestCase):
 
     def test_create_folder_assigns_color(self):
         response = self.client.post(reverse('add_folder'), {'name': 'Work'})
-        self.assertRedirects(response, reverse('home'))
+        self.assertRedirects(response, reverse('folders'))
         folder = Folder.objects.get(name='Work', user=self.user)
         self.assertEqual(folder.color, '#F87171')
 
@@ -289,7 +295,7 @@ class ArrangeTests(TestCase):
         bookmark.refresh_from_db()
         self.assertIsNone(bookmark.folder)
 
-    def test_home_toggle_control_present(self):
+    def test_home_has_desktop(self):
         response = self.client.get(reverse('home'))
-        self.assertContains(response, 'titles-toggle')
         self.assertContains(response, 'home-desktop')
+        self.assertNotContains(response, 'titles-toggle')

@@ -6,23 +6,6 @@
 <div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
     {% include "bookmarks/_header.html" %}
 
-    <section class="mb-10">
-        <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-white/60">Folders</h2>
-        <ul class="space-y-2">
-            {% for item in folders %}
-                <li>
-                    <a href="{% url 'edit_folder' item.pk %}" class="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 hover:bg-white/15">
-                        <span class="h-8 w-8 flex-shrink-0 rounded-xl" style="background-color: {{ item.color }}"></span>
-                        <span class="min-w-0 flex-1 truncate">{{ item.name }}</span>
-                        <span class="text-sm text-white/50">{{ item.bookmark_count }}</span>
-                    </a>
-                </li>
-            {% empty %}
-                <li class="text-sm text-white/60">No folders yet.</li>
-            {% endfor %}
-        </ul>
-    </section>
-
     <section>
         <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-white/60">Bookmarks</h2>
         <ul class="space-y-2">

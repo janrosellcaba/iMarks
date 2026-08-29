@@ -10,11 +10,6 @@
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}?v=3">
     <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}?v=3">
     <script>
-        try {
-            if (localStorage.getItem('imarks-titles') === '0') {
-                document.documentElement.classList.add('hide-titles');
-            }
-        } catch (error) {}
         function iMarksIconFail(img) {
             const all = (img.dataset.icons || '').split('||').filter(Boolean);
             const next = Number(img.dataset.iconI || 0) + 1;
@@ -51,7 +46,6 @@
     <style>
         summary { list-style: none; }
         summary::-webkit-details-marker { display: none; }
-        html.hide-titles .app-label { display: none; }
         body.is-dragging { cursor: grabbing; }
         body.is-dragging .folder-scrim { pointer-events: none; }
         .home-item.is-ghost { opacity: 0.35; }
