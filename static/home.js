@@ -5,7 +5,7 @@
     const arrangeUrl = desktop.dataset.arrangeUrl;
     const homeUrl = desktop.dataset.homeUrl || '/';
     const HOLD_MS = 360;
-    const MOVE_PX = 12;
+    const MOVE_PX = 6;
     let press = null;
     let drag = null;
     let suppressClick = false;
@@ -82,25 +82,33 @@
         else container.appendChild(dragged);
     }
 
+    function openItem(item) {
+        const link = item.querySelector('a[href]');
+        if (!link) return;
+        if (link.target === '_blank') {
+            window.open(link.href, '_blank', 'noopener,noreferrer');
+        } else {
+            window.location.href = link.href;
+        }
+    }
+
     function startDrag(event, item) {
         if (drag) return;
         const box = item.getBoundingClientRect();
         const ghost = item.cloneNode(true);
         ghost.id = 'drag-ghost';
         ghost.style.width = box.width + 'px';
-        ghost.style.left = (event.clientX - (event.clientX - box.left)) + 'px';
-        ghost.style.top = (event.clientY - (event.clientY - box.top)) + 'px';
+        ghost.style.left = box.left + 'px';
+        ghost.style.top = box.top + 'px';
         document.body.appendChild(ghost);
         item.classList.add('is-ghost');
         document.body.classList.add('is-dragging');
-        item.setPointerCapture(event.pointerId);
-        if (navigator.vibrate) navigator.vibrate(8);
+        try { item.setPointerCapture(event.pointerId); } catch (error) {}
         drag = {
             el: item,
             ghost,
             offsetX: event.clientX - box.left,
             offsetY: event.clientY - box.top,
-            moved: false,
         };
         suppressClick = true;
         moveGhost(event.clientX, event.clientY);
@@ -121,7 +129,6 @@
             over.app.classList.add('is-drop-on');
             return;
         }
-        drag.moved = true;
         if (drag.el.dataset.folder) {
             const tray = drag.el.closest('.folder-apps');
             if (tray && over.tray && over.tray.contains(tray)) {
@@ -195,63 +202,96 @@
         }
     }
 
+    function unbindDocument() {
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', onPointerUp);
+        document.removeEventListener('pointercancel', onPointerUp);
+    }
+
     function cancelPress() {
         if (press && press.timer) window.clearTimeout(press.timer);
         press = null;
+        unbindDocument();
+    }
+
+    function onPointerMove(event) {
+        if (press && event.pointerId !== press.pointerId) return;
+        if (drag) {
+            event.preventDefault();
+            moveGhost(event.clientX, event.clientY);
+            return;
+        }
+        if (!press) return;
+        const dist = Math.hypot(event.clientX - press.startX, event.clientY - press.startY);
+        if (press.pointerType === 'touch' && dist > MOVE_PX && !press.lifted) {
+            cancelPress();
+            return;
+        }
+        if (dist > MOVE_PX) {
+            const item = press.item;
+            const pointerId = press.pointerId;
+            if (press.timer) window.clearTimeout(press.timer);
+            press.timer = null;
+            press.lifted = true;
+            startDrag(event, item);
+            try { item.setPointerCapture(pointerId); } catch (error) {}
+            moveGhost(event.clientX, event.clientY);
+        }
+    }
+
+    function onPointerUp(event) {
+        if (press && event.pointerId !== press.pointerId) return;
+        if (drag) {
+            event.preventDefault();
+            finish(event.clientX, event.clientY);
+            cancelPress();
+            window.setTimeout(function () { suppressClick = false; }, 250);
+            return;
+        }
+        const item = press && press.item;
+        const wasMouse = press && press.pointerType !== 'touch';
+        cancelPress();
+        if (item && wasMouse) {
+            suppressClick = true;
+            openItem(item);
+            window.setTimeout(function () { suppressClick = false; }, 250);
+        }
     }
 
     desktop.addEventListener('pointerdown', function (event) {
         if (event.button !== 0) return;
         const item = pickupTarget(event);
         if (!item) return;
-        const startX = event.clientX;
-        const startY = event.clientY;
-        const isTouch = event.pointerType === 'touch';
-        press = { item, startX, startY, pointerId: event.pointerId };
-        press.timer = window.setTimeout(function () {
-            if (!press || press.item !== item) return;
-            startDrag(event, item);
-        }, isTouch ? HOLD_MS : 180);
+        if (event.pointerType !== 'touch') {
+            event.preventDefault();
+        }
+        press = {
+            item: item,
+            startX: event.clientX,
+            startY: event.clientY,
+            pointerId: event.pointerId,
+            pointerType: event.pointerType,
+            lifted: false,
+        };
+        document.addEventListener('pointermove', onPointerMove, { passive: false });
+        document.addEventListener('pointerup', onPointerUp);
+        document.addEventListener('pointercancel', onPointerUp);
+        if (event.pointerType === 'touch') {
+            press.timer = window.setTimeout(function () {
+                if (!press || press.item !== item) return;
+                press.lifted = true;
+                startDrag(event, item);
+            }, HOLD_MS);
+        }
     });
-
-    desktop.addEventListener('pointermove', function (event) {
-        if (drag && drag.el.hasPointerCapture(event.pointerId)) {
-            event.preventDefault();
-            moveGhost(event.clientX, event.clientY);
-            return;
-        }
-        if (!press) return;
-        const dx = event.clientX - press.startX;
-        const dy = event.clientY - press.startY;
-        const dist = Math.hypot(dx, dy);
-        if (event.pointerType === 'touch' && dist > MOVE_PX && !drag) {
-            cancelPress();
-            return;
-        }
-        if (dist > MOVE_PX && press) {
-            const item = press.item;
-            cancelPress();
-            startDrag(event, item);
-            moveGhost(event.clientX, event.clientY);
-        }
-    }, { passive: false });
-
-    function endPointer(event) {
-        if (drag) {
-            event.preventDefault();
-            finish(event.clientX, event.clientY);
-            window.setTimeout(function () { suppressClick = false; }, 250);
-            return;
-        }
-        cancelPress();
-    }
-
-    desktop.addEventListener('pointerup', endPointer);
-    desktop.addEventListener('pointercancel', endPointer);
 
     desktop.addEventListener('click', function (event) {
         if (!suppressClick) return;
         event.preventDefault();
         event.stopPropagation();
     }, true);
+
+    desktop.addEventListener('dragstart', function (event) {
+        event.preventDefault();
+    });
 })();
