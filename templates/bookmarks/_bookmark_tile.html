@@ -1,6 +1,6 @@
 <a href="{{ bookmark.url }}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2" title="{{ bookmark.title }}">
     <span class="relative aspect-square w-full max-w-[4.75rem] overflow-hidden rounded-ios shadow-sm sm:max-w-[5.5rem]"
-          style="background-color: {{ bookmark.tile_color }}">
+          style="background-color: {% if on_light %}rgba(255,255,255,0.55){% else %}{{ bookmark.tile_color }}{% endif %}">
         {% if bookmark.icon_url %}
             <img src="{{ bookmark.icon_url }}" alt="" class="absolute inset-0 h-full w-full object-cover"
                 onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
@@ -9,5 +9,5 @@
             <span class="absolute inset-0 flex items-center justify-center text-lg font-semibold text-slate-700">{{ bookmark.title.0 }}</span>
         {% endif %}
     </span>
-    <span class="w-full truncate text-center text-xs text-white/90">{{ bookmark.title }}</span>
+    <span class="w-full truncate text-center text-xs {% if on_light %}text-slate-800{% else %}text-white/90{% endif %}">{{ bookmark.title }}</span>
 </a>
