@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
-    {% include "bookmarks/_header.html" with heading="Manage" %}
+    {% include "bookmarks/_header.html" %}
 
     <section class="mb-10">
         <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-white/60">Folders</h2>
@@ -30,9 +30,7 @@
                 <li>
                     <a href="{% url 'edit_bookmark' bookmark.pk %}" class="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 hover:bg-white/15">
                         <span class="h-8 w-8 flex-shrink-0 overflow-hidden rounded-xl" style="background-color: {{ bookmark.tile_color }}">
-                            {% if bookmark.icon_url %}
-                                <img src="{{ bookmark.icon_url }}" alt="" class="h-full w-full object-cover">
-                            {% endif %}
+                            {% include "bookmarks/_icon.html" with img_class="h-full w-full object-cover" fallback_class="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-700" %}
                         </span>
                         <span class="min-w-0 flex-1">
                             <span class="block truncate">{{ bookmark.title }}</span>

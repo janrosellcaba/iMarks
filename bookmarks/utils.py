@@ -21,11 +21,37 @@ FOLDER_COLORS = (
 )
 
 
+def icon_candidates(url):
+    parsed = urlparse(url)
+    host = (parsed.hostname or '').lower().strip('.')
+    if not host:
+        return []
+    hosts = [host]
+    if host.startswith('www.'):
+        hosts.append(host[4:])
+    else:
+        hosts.append(f'www.{host}')
+    urls = []
+    seen = set()
+
+    def add(candidate):
+        if candidate not in seen:
+            seen.add(candidate)
+            urls.append(candidate)
+
+    for name in hosts:
+        add(f'https://icons.duckduckgo.com/ip3/{name}.ico')
+        add(f'https://www.google.com/s2/favicons?domain={name}&sz=128')
+    scheme = parsed.scheme or 'https'
+    add(f'{scheme}://{host}/favicon.ico')
+    add(f'{scheme}://{host}/favicon.png')
+    add(f'{scheme}://{host}/apple-touch-icon.png')
+    return urls
+
+
 def favicon_for_url(url):
-    hostname = urlparse(url).hostname
-    if not hostname:
-        return ''
-    return f'https://www.google.com/s2/favicons?domain={hostname}&sz=256'
+    candidates = icon_candidates(url)
+    return candidates[0] if candidates else ''
 
 
 def default_folder_color():

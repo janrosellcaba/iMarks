@@ -1,20 +1,19 @@
+{% with url_name=request.resolver_match.url_name %}
 <header class="mb-8 flex items-center justify-between gap-3">
-    <div class="flex min-w-0 items-center gap-3">
-        {% if folder or heading %}
-            <a href="{% url 'home' %}" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-slate-900 shadow-md" aria-label="Back">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6" aria-hidden="true">
-                    <path d="M15 18l-6-6 6-6"/>
-                </svg>
-            </a>
-            <h1 class="truncate text-2xl font-semibold tracking-tight">{% firstof folder.name heading %}</h1>
-        {% else %}
-            <h1 class="text-2xl font-semibold tracking-tight">iMarks</h1>
-        {% endif %}
-    </div>
+    <nav class="flex min-w-0 items-center overflow-x-auto rounded-full bg-white/10 p-1" aria-label="Sections">
+        <a href="{% url 'home' %}"
+           class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium {% if url_name == 'home' or url_name == 'folder' %}bg-white text-slate-900 shadow-sm{% else %}text-white/80 hover:bg-white/10 hover:text-white{% endif %}">Home</a>
+        <a href="{% url 'export' %}"
+           class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">Export</a>
+        <a href="{% url 'add_folder' %}"
+           class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium {% if url_name == 'add_folder' %}bg-white text-slate-900 shadow-sm{% else %}text-white/80 hover:bg-white/10 hover:text-white{% endif %}">Folder</a>
+        <a href="{% url 'manage' %}"
+           class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium {% if url_name == 'manage' %}bg-white text-slate-900 shadow-sm{% else %}text-white/80 hover:bg-white/10 hover:text-white{% endif %}">Manage</a>
+    </nav>
     <div class="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-        <a href="{% url 'export' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Export</a>
-        <a href="{% url 'add_folder' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Folder</a>
-        <a href="{% url 'manage' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Manage</a>
+        {% if url_name == 'home' or url_name == 'folder' %}
+            <button type="button" id="titles-toggle" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25" aria-pressed="true">Titles</button>
+        {% endif %}
         <a href="{% url 'add_bookmark' %}{% if open_folder %}?folder={{ open_folder.pk }}{% endif %}" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl font-medium leading-none text-slate-900" aria-label="Add bookmark">+</a>
         <details class="relative">
             <summary class="cursor-pointer list-none rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">
@@ -34,3 +33,4 @@
         </details>
     </div>
 </header>
+{% endwith %}

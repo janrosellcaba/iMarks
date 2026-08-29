@@ -1,13 +1,15 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}iMarks{% endblock %}
 
 {% block content %}
 <div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
     {% if open_folder %}
-        <a href="{% url 'home' %}" class="fixed inset-0 z-10" aria-label="Close folder"></a>
+        <a href="{% url 'home' %}" class="folder-scrim fixed inset-0 z-10" aria-label="Close folder"></a>
     {% endif %}
 
+    {% csrf_token %}
     {% include "bookmarks/_header.html" %}
 
     {% if messages %}
@@ -16,50 +18,46 @@
         {% endfor %}
     {% endif %}
 
-    <main class="grid grid-cols-4 gap-x-4 gap-y-6 md:grid-cols-8">
-        {% for item in folders %}
-            {% if open_folder.pk == item.pk %}
-                <section class="relative z-20 col-span-4 md:col-span-8">
-                    <div class="relative w-fit max-w-full rounded-[2rem] p-4 shadow-lg sm:p-5" style="background-color: {{ item.color }}">
-                        <a href="{% url 'home' %}" class="absolute inset-0 rounded-[2rem]" aria-label="Close {{ item.name }}"></a>
-                        <h2 class="relative mb-4 truncate text-base font-semibold text-slate-800 pointer-events-none">{{ item.name }}</h2>
-                        <div class="relative flex flex-wrap gap-x-4 gap-y-6">
-                            {% for bookmark in item.bookmarks.all %}
+    <main id="home-desktop" class="flex flex-wrap items-start gap-x-4 gap-y-5" data-arrange-url="{% url 'arrange' %}" data-home-url="{% url 'home' %}">
+        {% for item in home_items %}
+            {% if item.kind == 'folder' %}
+                {% if open_folder.pk == item.folder.pk %}
+                    <section class="folder-tray home-item relative z-20 flex w-fit max-w-full items-center gap-2 rounded-[1.35rem] py-1 pl-1.5 pr-2 shadow-md" data-type="folder" data-id="{{ item.folder.pk }}" data-open="1" style="background-color: {{ item.folder.color }}">
+                        <a href="{% url 'home' %}" class="absolute inset-0 rounded-[1.35rem]" aria-label="Close {{ item.folder.name }}"></a>
+                        <span class="app-label pointer-events-none relative max-w-[4.5rem] shrink-0 truncate text-[11px] font-semibold text-slate-800">{{ item.folder.name }}</span>
+                        <div class="folder-apps relative flex items-center gap-x-3">
+                            {% for bookmark in item.folder.bookmarks.all %}
                                 {% include "bookmarks/_bookmark_tile.html" with on_light=True %}
                             {% empty %}
-                                <p class="text-sm text-slate-700/70 pointer-events-none">This folder is empty.</p>
+                                <p class="pointer-events-none whitespace-nowrap py-2 pr-2 text-xs text-slate-700/70">Empty</p>
                             {% endfor %}
                         </div>
+                    </section>
+                {% else %}
+                    <div class="home-item shrink-0 touch-manipulation select-none" data-type="folder" data-id="{{ item.folder.pk }}">
+                        <a href="{% url 'home' %}?open={{ item.folder.pk }}" draggable="false" class="flex w-[4.75rem] flex-col items-center gap-1.5 sm:w-[5.5rem]" title="{{ item.folder.name }}">
+                            <span class="relative aspect-square w-full overflow-hidden rounded-ios shadow-sm" style="background-color: {{ item.folder.color }}">
+                                <span class="absolute inset-1.5 grid grid-cols-2 grid-rows-2 gap-0.5">
+                                    {% for bookmark in item.folder.bookmarks.all|slice:":4" %}
+                                        {% include "bookmarks/_icon.html" with img_class="h-full w-full rounded-[20%] object-cover" fallback_class="flex h-full w-full items-center justify-center rounded-[20%] bg-white/40 text-[10px] font-semibold text-slate-700" %}
+                                    {% endfor %}
+                                </span>
+                            </span>
+                            <span class="app-label w-full truncate text-center text-xs text-white/90">{{ item.folder.name }}</span>
+                        </a>
                     </div>
-                </section>
+                {% endif %}
             {% else %}
-                <a href="{% url 'home' %}?open={{ item.pk }}" class="flex flex-col items-center gap-2" title="{{ item.name }}">
-                    <span class="relative aspect-square w-full max-w-[4.75rem] overflow-hidden rounded-ios shadow-sm sm:max-w-[5.5rem]"
-                          style="background-color: {{ item.color }}">
-                        <span class="absolute inset-1.5 grid grid-cols-2 grid-rows-2 gap-0.5">
-                            {% for bookmark in item.bookmarks.all|slice:":4" %}
-                                {% if bookmark.icon_url %}
-                                    <img src="{{ bookmark.icon_url }}" alt="" class="h-full w-full rounded-[20%] object-cover">
-                                {% else %}
-                                    <span class="flex items-center justify-center rounded-[20%] bg-white/40 text-[10px] font-semibold text-slate-700">{{ bookmark.title.0 }}</span>
-                                {% endif %}
-                            {% endfor %}
-                        </span>
-                    </span>
-                    <span class="w-full truncate text-center text-xs text-white/90">{{ item.name }}</span>
-                </a>
+                {% include "bookmarks/_bookmark_tile.html" with bookmark=item.bookmark %}
             {% endif %}
         {% endfor %}
 
-        {% for bookmark in bookmarks %}
-            {% include "bookmarks/_bookmark_tile.html" %}
-        {% endfor %}
-
-        {% if not folders and not bookmarks %}
-            <p class="col-span-4 md:col-span-8 mt-16 text-center text-white/70">
+        {% if not home_items %}
+            <p class="mt-16 w-full text-center text-white/70">
                 No bookmarks yet. Tap + to add one.
             </p>
         {% endif %}
     </main>
 </div>
+<script src="{% static 'home.js' %}"></script>
 {% endblock %}

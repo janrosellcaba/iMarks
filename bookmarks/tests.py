@@ -3,6 +3,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import Bookmark, Folder
+from .utils import icon_candidates
 
 
 class BookmarkAuthTests(TestCase):
@@ -99,6 +100,13 @@ class BookmarkViewTests(TestCase):
         self.assertEqual(folder.name, 'Work')
         self.assertEqual(folder.color, '#F472B6')
 
+    def test_header_has_home_tab(self):
+        home = self.client.get(reverse('home'))
+        self.assertContains(home, 'Home')
+        manage = self.client.get(reverse('manage'))
+        self.assertContains(manage, 'href="/"')
+        self.assertContains(manage, 'Home')
+
     def test_manage_lists_items(self):
         Folder.objects.create(user=self.user, name='Dev', color='#bae1ff')
         Bookmark.objects.create(user=self.user, title='Mine', url='https://example.com')
@@ -178,3 +186,110 @@ class BookmarkViewTests(TestCase):
         self.assertRedirects(response, reverse('login'))
         self.assertFalse(User.objects.filter(username='jan').exists())
         self.assertEqual(Bookmark.objects.count(), 0)
+
+
+class FaviconAndIconTests(TestCase):
+    def test_favicon_route_serves_icon(self):
+        response = self.client.get('/favicon.ico')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(response['Content-Type'], {'image/x-icon', 'image/vnd.microsoft.icon', 'image/png'})
+
+    def test_icon_candidates_include_fallbacks(self):
+        urls = icon_candidates('https://www.djangoproject.com/')
+        joined = ' '.join(urls)
+        self.assertIn('duckduckgo.com', joined)
+        self.assertIn('djangoproject.com', joined)
+        self.assertIn('google.com/s2/favicons', joined)
+        self.assertIn('/favicon.ico', joined)
+
+
+class ArrangeTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('jan', password='secret')
+        self.other = User.objects.create_user('other', password='secret')
+        self.client.login(username='jan', password='secret')
+
+    def post_arrange(self, payload):
+        return self.client.post(
+            reverse('arrange'),
+            data=payload,
+            content_type='application/json',
+        )
+
+    def test_reorder_home(self):
+        folder = Folder.objects.create(user=self.user, name='Dev', sort_order=0)
+        first = Bookmark.objects.create(user=self.user, title='A', url='https://a.example', sort_order=1)
+        second = Bookmark.objects.create(user=self.user, title='B', url='https://b.example', sort_order=2)
+        response = self.post_arrange({
+            'op': 'reorder_home',
+            'items': [
+                {'type': 'bookmark', 'id': second.pk},
+                {'type': 'folder', 'id': folder.pk},
+                {'type': 'bookmark', 'id': first.pk},
+            ],
+        })
+        self.assertEqual(response.status_code, 200)
+        second.refresh_from_db()
+        folder.refresh_from_db()
+        first.refresh_from_db()
+        self.assertEqual(second.sort_order, 0)
+        self.assertEqual(folder.sort_order, 1)
+        self.assertEqual(first.sort_order, 2)
+
+    def test_move_into_and_out_of_folder(self):
+        folder = Folder.objects.create(user=self.user, name='Dev')
+        bookmark = Bookmark.objects.create(user=self.user, title='A', url='https://a.example')
+        response = self.post_arrange({
+            'op': 'move',
+            'bookmark_id': bookmark.pk,
+            'folder_id': folder.pk,
+            'index': 0,
+        })
+        self.assertEqual(response.status_code, 200)
+        bookmark.refresh_from_db()
+        self.assertEqual(bookmark.folder, folder)
+
+        response = self.post_arrange({
+            'op': 'move',
+            'bookmark_id': bookmark.pk,
+            'folder_id': None,
+            'index': 0,
+        })
+        self.assertEqual(response.status_code, 200)
+        bookmark.refresh_from_db()
+        self.assertIsNone(bookmark.folder)
+
+    def test_stack_creates_folder(self):
+        first = Bookmark.objects.create(user=self.user, title='A', url='https://a.example', sort_order=0)
+        second = Bookmark.objects.create(user=self.user, title='B', url='https://b.example', sort_order=1)
+        response = self.post_arrange({
+            'op': 'stack',
+            'bookmark_id': second.pk,
+            'onto_bookmark_id': first.pk,
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        folder = Folder.objects.get(pk=data['folder_id'])
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(first.folder, folder)
+        self.assertEqual(second.folder, folder)
+        self.assertEqual(Bookmark.objects.filter(user=self.user, folder__isnull=True).count(), 0)
+
+    def test_cannot_arrange_someone_elses_bookmark(self):
+        bookmark = Bookmark.objects.create(user=self.other, title='Theirs', url='https://other.example')
+        folder = Folder.objects.create(user=self.user, name='Dev')
+        response = self.post_arrange({
+            'op': 'move',
+            'bookmark_id': bookmark.pk,
+            'folder_id': folder.pk,
+            'index': 0,
+        })
+        self.assertEqual(response.status_code, 400)
+        bookmark.refresh_from_db()
+        self.assertIsNone(bookmark.folder)
+
+    def test_home_toggle_control_present(self):
+        response = self.client.get(reverse('home'))
+        self.assertContains(response, 'titles-toggle')
+        self.assertContains(response, 'home-desktop')

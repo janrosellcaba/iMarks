@@ -15,10 +15,16 @@ from bookmarks import views as bookmark_views
 
 @require_GET
 def favicon(request):
-    icon = Path(settings.BASE_DIR) / 'static' / 'favicon.png'
-    if not icon.exists():
-        raise Http404()
-    return FileResponse(icon.open('rb'), content_type='image/png')
+    for name, content_type in (
+        ('favicon.ico', 'image/x-icon'),
+        ('favicon.png', 'image/png'),
+    ):
+        icon = Path(settings.BASE_DIR) / 'static' / name
+        if icon.exists():
+            response = FileResponse(icon.open('rb'), content_type=content_type)
+            response['Cache-Control'] = 'public, max-age=86400'
+            return response
+    raise Http404()
 
 
 urlpatterns = [

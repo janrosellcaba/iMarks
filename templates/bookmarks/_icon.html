@@ -1,0 +1,12 @@
+{% with icons=bookmark.icons letter=bookmark.title|first|default:"•" %}
+{% if icons %}
+<img src="{{ icons.0 }}" alt="" class="{{ img_class }}"
+     data-icons="{% for url in icons %}{{ url }}{% if not forloop.last %}||{% endif %}{% endfor %}"
+     data-icon-i="0"
+     onerror="iMarksIconFail(this)"
+     onload="iMarksIconCheck(this)">
+<span class="hidden {{ fallback_class }}">{{ letter }}</span>
+{% else %}
+<span class="{{ fallback_class }}">{{ letter }}</span>
+{% endif %}
+{% endwith %}

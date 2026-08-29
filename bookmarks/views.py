@@ -1,11 +1,22 @@
+import json
+
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from .arrange import (
+    apply_move,
+    apply_reorder_folder,
+    apply_reorder_home,
+    apply_stack,
+    assign_sort,
+    mixed_home_items,
+    next_home_sort,
+)
 from .forms import BookmarkForm, FolderForm, RegistrationForm
 from .models import Bookmark, Folder
 from .utils import favicon_for_url, netscape_export
@@ -32,16 +43,9 @@ def home(request, folder_id=None):
     if open_id:
         open_folder = Folder.objects.filter(pk=open_id, user=request.user).first()
 
-    folders = (
-        Folder.objects
-        .filter(user=request.user)
-        .prefetch_related('bookmarks')
-    )
-    bookmarks = Bookmark.objects.filter(user=request.user, folder__isnull=True)
     return render(request, 'bookmarks/home.html', {
         'open_folder': open_folder,
-        'folders': folders,
-        'bookmarks': bookmarks,
+        'home_items': mixed_home_items(request.user),
     })
 
 
@@ -59,6 +63,7 @@ def add_bookmark(request):
             bookmark = form.save(commit=False)
             bookmark.user = request.user
             bookmark.icon_url = favicon_for_url(bookmark.url)
+            assign_sort(bookmark, request.user)
             bookmark.save()
             return after_bookmark_save(bookmark)
     else:
@@ -81,8 +86,11 @@ def edit_bookmark(request, pk):
             return redirect('manage')
         form = BookmarkForm(request.POST, user=request.user, instance=bookmark)
         if form.is_valid():
+            old_folder_id = bookmark.folder_id
             bookmark = form.save(commit=False)
             bookmark.icon_url = favicon_for_url(bookmark.url)
+            if bookmark.folder_id != old_folder_id:
+                assign_sort(bookmark, request.user)
             bookmark.save()
             return redirect('manage')
     else:
@@ -100,6 +108,7 @@ def add_folder(request):
         if form.is_valid():
             folder = form.save(commit=False)
             folder.user = request.user
+            folder.sort_order = next_home_sort(request.user)
             folder.save()
             return redirect('home')
     else:
@@ -149,6 +158,44 @@ def export_bookmarks(request):
     response = HttpResponse(html, content_type='text/html; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="bookmarks.html"'
     return response
+
+
+@login_required
+@require_POST
+def arrange(request):
+    try:
+        payload = json.loads(request.body.decode() or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'invalid json'}, status=400)
+    op = payload.get('op')
+    extra = {}
+    try:
+        if op == 'reorder_home':
+            apply_reorder_home(request.user, payload.get('items') or [])
+        elif op == 'reorder_folder':
+            apply_reorder_folder(
+                request.user,
+                payload['folder_id'],
+                payload.get('bookmark_ids') or [],
+            )
+        elif op == 'move':
+            apply_move(
+                request.user,
+                payload['bookmark_id'],
+                payload.get('folder_id'),
+                payload.get('index', 0),
+            )
+        elif op == 'stack':
+            extra = apply_stack(
+                request.user,
+                payload['bookmark_id'],
+                payload['onto_bookmark_id'],
+            )
+        else:
+            return JsonResponse({'ok': False, 'error': 'unknown op'}, status=400)
+    except (KeyError, TypeError, ValueError, Bookmark.DoesNotExist, Folder.DoesNotExist):
+        return JsonResponse({'ok': False, 'error': 'invalid'}, status=400)
+    return JsonResponse({'ok': True, **extra})
 
 
 def register(request):

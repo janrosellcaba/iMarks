@@ -3,11 +3,36 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{% block title %}iMarks{% endblock %}</title>
-    <link rel="icon" href="/favicon.ico" type="image/png" sizes="32x32">
-    <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
+    <link rel="icon" href="{% static 'favicon.ico' %}?v=3" sizes="any">
+    <link rel="icon" href="{% static 'favicon.svg' %}?v=3" type="image/svg+xml">
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}?v=3">
+    <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}?v=3">
+    <script>
+        try {
+            if (localStorage.getItem('imarks-titles') === '0') {
+                document.documentElement.classList.add('hide-titles');
+            }
+        } catch (error) {}
+        function iMarksIconFail(img) {
+            const all = (img.dataset.icons || '').split('||').filter(Boolean);
+            const next = Number(img.dataset.iconI || 0) + 1;
+            if (next < all.length) {
+                img.dataset.iconI = String(next);
+                img.src = all[next];
+                return;
+            }
+            img.classList.add('hidden');
+            const fallback = img.nextElementSibling;
+            if (fallback) fallback.classList.remove('hidden');
+        }
+        function iMarksIconCheck(img) {
+            if (img.naturalWidth && img.naturalWidth <= 16 && /google\.com\/s2\/favicons/.test(img.src)) {
+                iMarksIconFail(img);
+            }
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,6 +51,19 @@
     <style>
         summary { list-style: none; }
         summary::-webkit-details-marker { display: none; }
+        html.hide-titles .app-label { display: none; }
+        body.is-dragging { cursor: grabbing; }
+        body.is-dragging .folder-scrim { pointer-events: none; }
+        .home-item.is-ghost { opacity: 0.35; }
+        .home-item.is-drop-on { transform: scale(1.08); }
+        #drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 80;
+            margin: 0;
+            opacity: 0.95;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.35));
+        }
     </style>
 </head>
 <body class="min-h-screen bg-[radial-gradient(1200px_circle_at_20%_10%,#7dd3fc_0%,transparent_45%),radial-gradient(900px_circle_at_90%_20%,#c4b5fd_0%,transparent_40%),linear-gradient(180deg,#1e293b_0%,#0f172a_55%,#1e1b4b_100%)] font-sans text-white antialiased">
