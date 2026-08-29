@@ -2,7 +2,7 @@ import json
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -41,7 +41,14 @@ def home(request, folder_id=None):
     open_folder = None
     open_id = request.GET.get('open')
     if open_id:
-        open_folder = Folder.objects.filter(pk=open_id, user=request.user).first()
+        open_folder = (
+            Folder.objects
+            .filter(pk=open_id, user=request.user)
+            .prefetch_related(
+                Prefetch('bookmarks', queryset=Bookmark.objects.order_by('sort_order', 'pk')),
+            )
+            .first()
+        )
 
     return render(request, 'bookmarks/home.html', {
         'open_folder': open_folder,

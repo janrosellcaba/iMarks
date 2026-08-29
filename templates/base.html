@@ -5,10 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{% block title %}iMarks{% endblock %}</title>
-    <link rel="icon" href="{% static 'favicon.ico' %}?v=3" sizes="any">
-    <link rel="icon" href="{% static 'favicon.svg' %}?v=3" type="image/svg+xml">
-    <link rel="shortcut icon" href="{% static 'favicon.ico' %}?v=3">
-    <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}?v=3">
+    <link rel="icon" href="/favicon.ico?v=4" type="image/x-icon" sizes="any">
+    <link rel="shortcut icon" href="/favicon.ico?v=4">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
     <script>
         function iMarksIconFail(img) {
             const all = (img.dataset.icons || '').split('||').filter(Boolean);
@@ -49,6 +48,7 @@
         body.is-dragging { cursor: grabbing; }
         body.is-dragging .folder-scrim { pointer-events: none; }
         .home-item { cursor: grab; }
+        .folder-tray { cursor: default; }
         .home-item.is-ghost { opacity: 0.35; }
         .home-item.is-drop-on { transform: scale(1.08); }
         #drag-ghost {

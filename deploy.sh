@@ -20,6 +20,7 @@ python manage.py migrate
 
 echo "==> Collecting static files"
 python manage.py collectstatic --noinput
+chmod -R a+rX static staticfiles 2>/dev/null || true
 
 echo "==> Restarting iMarks (Gunicorn)"
 sudo systemctl restart iMarks

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from .utils import icon_candidates
+from .utils import hex_to_rgba, icon_candidates
 
 
 class Folder(models.Model):
@@ -20,6 +20,14 @@ class Folder(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def fill(self):
+        return hex_to_rgba(self.color, 0.28)
+
+    @property
+    def wash(self):
+        return hex_to_rgba(self.color, 0.22)
 
 
 class Bookmark(models.Model):

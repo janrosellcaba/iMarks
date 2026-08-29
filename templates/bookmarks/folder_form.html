@@ -25,7 +25,7 @@
                         <label class="cursor-pointer">
                             <input type="radio" name="color" value="{{ value }}" class="peer sr-only"
                                 {% if form.color.value == value %}checked{% endif %} required>
-                            <span class="block h-9 w-9 rounded-full shadow-sm ring-2 ring-transparent ring-offset-2 ring-offset-slate-900 peer-checked:ring-white" style="background-color: {{ value }}"></span>
+                            <span class="block h-9 w-9 rounded-full shadow-sm ring-2 ring-transparent ring-offset-2 ring-offset-slate-900 peer-checked:ring-white" style="background-color: {{ value }}; opacity: 0.7"></span>
                         </label>
                     {% endfor %}
                 </div>

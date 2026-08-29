@@ -3,7 +3,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import Bookmark, Folder
-from .utils import icon_candidates
+from .utils import hex_to_rgba, icon_candidates
 
 
 class BookmarkAuthTests(TestCase):
@@ -199,6 +199,17 @@ class FaviconAndIconTests(TestCase):
         response = self.client.get('/favicon.ico')
         self.assertEqual(response.status_code, 200)
         self.assertIn(response['Content-Type'], {'image/x-icon', 'image/vnd.microsoft.icon', 'image/png'})
+
+    def test_favicon_svg_is_served_from_app_not_static(self):
+        response = self.client.get('/favicon.svg')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('svg', response['Content-Type'])
+        home = self.client.get(reverse('login'))
+        self.assertContains(home, '/favicon.ico')
+        self.assertNotContains(home, 'static/favicon.svg')
+
+    def test_hex_to_rgba_is_transparent(self):
+        self.assertEqual(hex_to_rgba('#F87171', 0.28), 'rgba(248, 113, 113, 0.28)')
 
     def test_icon_candidates_include_fallbacks(self):
         urls = icon_candidates('https://www.djangoproject.com/')

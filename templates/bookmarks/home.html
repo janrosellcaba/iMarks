@@ -6,7 +6,7 @@
 {% block content %}
 <div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
     {% if open_folder %}
-        <a href="{% url 'home' %}" class="folder-scrim fixed inset-0 z-10" aria-label="Close folder"></a>
+        <a href="{% url 'home' %}" class="folder-scrim fixed inset-0 z-10 bg-slate-950/40 backdrop-blur-[2px]" aria-label="Close folder"></a>
     {% endif %}
 
     {% csrf_token %}
@@ -21,32 +21,22 @@
     <main id="home-desktop" class="flex flex-wrap items-start gap-x-4 gap-y-5" data-arrange-url="{% url 'arrange' %}" data-home-url="{% url 'home' %}">
         {% for item in home_items %}
             {% if item.kind == 'folder' %}
-                {% if open_folder.pk == item.folder.pk %}
-                    <section class="folder-tray home-item relative z-20 flex w-fit max-w-full items-center gap-2 rounded-[1.35rem] py-1 pl-1.5 pr-2 shadow-md" data-type="folder" data-id="{{ item.folder.pk }}" data-open="1" style="background-color: {{ item.folder.color }}">
-                        <a href="{% url 'home' %}" class="absolute inset-0 rounded-[1.35rem]" aria-label="Close {{ item.folder.name }}"></a>
-                        <span class="app-label pointer-events-none relative max-w-[4.5rem] shrink-0 truncate text-[11px] font-semibold text-slate-800">{{ item.folder.name }}</span>
-                        <div class="folder-apps relative flex items-center gap-x-3">
-                            {% for bookmark in item.folder.bookmarks.all %}
-                                {% include "bookmarks/_bookmark_tile.html" with on_light=True %}
-                            {% empty %}
-                                <p class="pointer-events-none whitespace-nowrap py-2 pr-2 text-xs text-slate-700/70">Empty</p>
-                            {% endfor %}
-                        </div>
-                    </section>
-                {% else %}
-                    <div class="home-item shrink-0 touch-manipulation select-none" data-type="folder" data-id="{{ item.folder.pk }}">
-                        <a href="{% url 'home' %}?open={{ item.folder.pk }}" draggable="false" class="flex w-[4.75rem] flex-col items-center gap-1.5 sm:w-[5.5rem]" title="{{ item.folder.name }}">
-                            <span class="relative aspect-square w-full overflow-hidden rounded-ios shadow-sm" style="background-color: {{ item.folder.color }}">
-                                <span class="absolute inset-1.5 grid grid-cols-2 grid-rows-2 gap-0.5">
-                                    {% for bookmark in item.folder.bookmarks.all|slice:":4" %}
-                                        {% include "bookmarks/_icon.html" with img_class="h-full w-full rounded-[20%] object-cover" fallback_class="flex h-full w-full items-center justify-center rounded-[20%] bg-white/40 text-[10px] font-semibold text-slate-700" %}
-                                    {% endfor %}
-                                </span>
+                <div class="home-item relative z-20 shrink-0 touch-manipulation select-none" data-type="folder" data-id="{{ item.folder.pk }}">
+                    <a href="{% if open_folder.pk == item.folder.pk %}{% url 'home' %}{% else %}{% url 'home' %}?open={{ item.folder.pk }}{% endif %}"
+                       draggable="false"
+                       class="flex w-[4.75rem] flex-col items-center gap-1.5 sm:w-[5.5rem]"
+                       title="{{ item.folder.name }}">
+                        <span class="relative aspect-square w-full overflow-hidden rounded-ios shadow-sm ring-1 ring-white/20 {% if open_folder.pk == item.folder.pk %}ring-2 ring-white/70{% endif %}"
+                              style="background-color: {{ item.folder.fill }}">
+                            <span class="absolute inset-1.5 grid grid-cols-2 grid-rows-2 gap-0.5">
+                                {% for bookmark in item.folder.bookmarks.all|slice:":4" %}
+                                    {% include "bookmarks/_icon.html" with img_class="h-full w-full rounded-[20%] object-cover" fallback_class="flex h-full w-full items-center justify-center rounded-[20%] bg-white/40 text-[10px] font-semibold text-slate-700" %}
+                                {% endfor %}
                             </span>
-                            <span class="app-label w-full truncate text-center text-xs text-white/90">{{ item.folder.name }}</span>
-                        </a>
-                    </div>
-                {% endif %}
+                        </span>
+                        <span class="app-label w-full truncate text-center text-xs text-white/90">{{ item.folder.name }}</span>
+                    </a>
+                </div>
             {% else %}
                 {% include "bookmarks/_bookmark_tile.html" with bookmark=item.bookmark %}
             {% endif %}
@@ -59,5 +49,21 @@
         {% endif %}
     </main>
 </div>
-<script src="{% static 'home.js' %}?v=4"></script>
+
+{% if open_folder %}
+    <section class="folder-tray pointer-events-none fixed inset-0 z-20 flex items-center justify-center p-4" data-id="{{ open_folder.pk }}">
+        <div class="pointer-events-auto w-full max-w-sm rounded-3xl border border-white/20 p-4 shadow-2xl backdrop-blur-xl sm:p-5"
+             style="background-color: {{ open_folder.wash }}">
+            <h2 class="mb-4 truncate text-center text-sm font-medium text-white/85">{{ open_folder.name }}</h2>
+            <div class="folder-apps flex flex-wrap justify-center gap-x-4 gap-y-5">
+                {% for bookmark in open_folder.bookmarks.all %}
+                    {% include "bookmarks/_bookmark_tile.html" %}
+                {% empty %}
+                    <p class="py-6 text-sm text-white/60">This folder is empty.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endif %}
+<script src="{% static 'home.js' %}?v=5"></script>
 {% endblock %}

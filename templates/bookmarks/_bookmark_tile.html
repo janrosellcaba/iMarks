@@ -1,9 +1,9 @@
 <div class="home-item shrink-0 touch-manipulation select-none" data-type="bookmark" data-id="{{ bookmark.pk }}"{% if bookmark.folder_id %} data-folder="{{ bookmark.folder_id }}"{% endif %}>
     <a href="{{ bookmark.url }}" target="_blank" rel="noopener noreferrer" draggable="false" class="app-open flex w-[4.75rem] flex-col items-center gap-1.5 sm:w-[5.5rem]" title="{{ bookmark.title }}">
         <span class="relative aspect-square w-full overflow-hidden rounded-ios shadow-sm"
-              style="background-color: {% if on_light %}rgba(255,255,255,0.55){% else %}{{ bookmark.tile_color }}{% endif %}">
+              style="background-color: {% if on_light %}rgba(255,255,255,0.18){% else %}rgba(255,255,255,0.12){% endif %}">
             {% include "bookmarks/_icon.html" with img_class="absolute inset-0 h-full w-full object-cover" fallback_class="absolute inset-0 flex items-center justify-center text-lg font-semibold text-slate-700" %}
         </span>
-        <span class="app-label w-full truncate text-center text-xs {% if on_light %}text-slate-800{% else %}text-white/90{% endif %}">{{ bookmark.title }}</span>
+        <span class="app-label w-full truncate text-center text-xs text-white/90">{{ bookmark.title }}</span>
     </a>
 </div>

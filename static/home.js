@@ -39,7 +39,10 @@
 
     function pickupTarget(event) {
         const item = event.target.closest('.home-item');
-        if (!item || !desktop.contains(item) || item.dataset.open === '1') return null;
+        if (!item || item.dataset.open === '1') return null;
+        const inDesktop = desktop.contains(item);
+        const inTray = item.closest('.folder-tray');
+        if (!inDesktop && !inTray) return null;
         if (item.dataset.type === 'bookmark' || item.dataset.type === 'folder') return item;
         return null;
     }
@@ -258,7 +261,7 @@
         }
     }
 
-    desktop.addEventListener('pointerdown', function (event) {
+    document.addEventListener('pointerdown', function (event) {
         if (event.button !== 0) return;
         const item = pickupTarget(event);
         if (!item) return;
@@ -285,13 +288,15 @@
         }
     });
 
-    desktop.addEventListener('click', function (event) {
+    document.addEventListener('click', function (event) {
         if (!suppressClick) return;
         event.preventDefault();
         event.stopPropagation();
     }, true);
 
-    desktop.addEventListener('dragstart', function (event) {
-        event.preventDefault();
+    document.addEventListener('dragstart', function (event) {
+        if (event.target.closest && event.target.closest('.home-item')) {
+            event.preventDefault();
+        }
     });
 })();

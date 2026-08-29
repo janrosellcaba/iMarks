@@ -13,22 +13,31 @@ from django.views.decorators.http import require_GET
 from bookmarks import views as bookmark_views
 
 
+ICON_FILES = {
+    'favicon.ico': 'image/x-icon',
+    'favicon.svg': 'image/svg+xml',
+    'favicon.png': 'image/png',
+    'apple-touch-icon.png': 'image/png',
+}
+
+
 @require_GET
-def favicon(request):
-    for name, content_type in (
-        ('favicon.ico', 'image/x-icon'),
-        ('favicon.png', 'image/png'),
-    ):
-        icon = Path(settings.BASE_DIR) / 'static' / name
-        if icon.exists():
-            response = FileResponse(icon.open('rb'), content_type=content_type)
-            response['Cache-Control'] = 'public, max-age=86400'
-            return response
-    raise Http404()
+def site_icon(request, name):
+    content_type = ICON_FILES.get(name)
+    if not content_type:
+        raise Http404()
+    icon = Path(settings.BASE_DIR) / 'static' / name
+    if not icon.exists():
+        raise Http404()
+    response = FileResponse(icon.open('rb'), content_type=content_type)
+    response['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 
 urlpatterns = [
-    path('favicon.ico', favicon, name='favicon'),
+    path('favicon.ico', site_icon, {'name': 'favicon.ico'}, name='favicon'),
+    path('favicon.svg', site_icon, {'name': 'favicon.svg'}, name='favicon_svg'),
+    path('apple-touch-icon.png', site_icon, {'name': 'apple-touch-icon.png'}, name='apple_touch_icon'),
     path('admin/', admin.site.urls),
     path('login/', auth_views.LoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),

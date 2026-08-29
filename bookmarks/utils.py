@@ -21,6 +21,18 @@ FOLDER_COLORS = (
 )
 
 
+def hex_to_rgba(value, alpha=0.32):
+    raw = (value or '').strip().lstrip('#')
+    if len(raw) == 3:
+        raw = ''.join(char * 2 for char in raw)
+    if len(raw) != 6:
+        return f'rgba(226, 232, 240, {alpha})'
+    red = int(raw[0:2], 16)
+    green = int(raw[2:4], 16)
+    blue = int(raw[4:6], 16)
+    return f'rgba({red}, {green}, {blue}, {alpha})'
+
+
 def icon_candidates(url):
     parsed = urlparse(url)
     host = (parsed.hostname or '').lower().strip('.')
