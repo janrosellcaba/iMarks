@@ -4,6 +4,10 @@
 
 {% block content %}
 <div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
+    {% if open_folder %}
+        <a href="{% url 'home' %}" class="fixed inset-0 z-10" aria-label="Close folder"></a>
+    {% endif %}
+
     {% include "bookmarks/_header.html" %}
 
     {% if messages %}
@@ -15,16 +19,14 @@
     <main class="grid grid-cols-4 gap-x-4 gap-y-6 md:grid-cols-8">
         {% for item in folders %}
             {% if open_folder.pk == item.pk %}
-                <section class="col-span-4 md:col-span-8 rounded-[2rem] p-4 shadow-lg sm:p-5" style="background-color: {{ item.color }}">
-                    <div class="mb-4 flex items-center justify-between gap-3">
-                        <h2 class="truncate text-base font-semibold text-slate-800">{{ item.name }}</h2>
-                        <a href="{% url 'home' %}" class="shrink-0 text-sm font-medium text-slate-700/80 hover:text-slate-900">Close</a>
-                    </div>
-                    <div class="grid grid-cols-4 gap-x-4 gap-y-6 md:grid-cols-8">
+                <section class="relative z-20 col-span-4 md:col-span-8 rounded-[2rem] p-4 shadow-lg sm:p-5" style="background-color: {{ item.color }}">
+                    <a href="{% url 'home' %}" class="absolute inset-0 rounded-[2rem]" aria-label="Close {{ item.name }}"></a>
+                    <h2 class="relative mb-4 truncate text-base font-semibold text-slate-800 pointer-events-none">{{ item.name }}</h2>
+                    <div class="relative grid grid-cols-4 gap-x-4 gap-y-6 md:grid-cols-8">
                         {% for bookmark in item.bookmarks.all %}
                             {% include "bookmarks/_bookmark_tile.html" with on_light=True %}
                         {% empty %}
-                            <p class="col-span-4 text-sm text-slate-700/70 md:col-span-8">This folder is empty.</p>
+                            <p class="col-span-4 text-sm text-slate-700/70 md:col-span-8 pointer-events-none">This folder is empty.</p>
                         {% endfor %}
                     </div>
                 </section>
