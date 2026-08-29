@@ -240,11 +240,18 @@ class PwaTests(TestCase):
 
     def test_icon_candidates_use_parent_domain_for_subdomains(self):
         urls = icon_candidates('https://web.whatsapp.com/')
-        joined = ' '.join(urls)
-        self.assertIn('whatsapp.com', joined)
-        self.assertTrue(urls[0].endswith('domain=whatsapp.com') or 'domain=whatsapp.com' in urls[0])
-        self.assertLess(urls.index(next(u for u in urls if 'domain=whatsapp.com' in u)),
-                        urls.index(next(u for u in urls if 'duckduckgo.com' in u)))
+        self.assertTrue(urls[0].startswith('https://web.whatsapp.com/'))
+        self.assertIn('whatsapp.com', ' '.join(urls))
+        exact = next(i for i, url in enumerate(urls) if 'web.whatsapp.com' in url)
+        parent = next(i for i, url in enumerate(urls) if 'domain=whatsapp.com' in url)
+        self.assertLess(exact, parent)
+
+    def test_subdomain_icons_try_exact_host_before_parent(self):
+        urls = icon_candidates('https://cal.janrosell.com/')
+        self.assertTrue(urls[0].startswith('https://cal.janrosell.com/'))
+        exact = next(i for i, url in enumerate(urls) if 'cal.janrosell.com' in url)
+        parent = next(i for i, url in enumerate(urls) if 'domain=janrosell.com' in url)
+        self.assertLess(exact, parent)
 
 
 class ArrangeTests(TestCase):

@@ -4,7 +4,7 @@
 
     const arrangeUrl = desktop.dataset.arrangeUrl;
     const homeUrl = desktop.dataset.homeUrl || '/';
-    const MOVE_PX = 8;
+    const MOVE_PX = 14;
     let press = null;
     let drag = null;
     let didDrag = false;
@@ -83,6 +83,16 @@
         const target = others[index];
         if (target) container.insertBefore(dragged, target);
         else container.appendChild(dragged);
+    }
+
+    function openItem(item) {
+        const link = item.querySelector('a[href]');
+        if (!link) return;
+        if (link.target === '_blank') {
+            window.open(link.href, '_blank', 'noopener,noreferrer');
+        } else {
+            window.location.href = link.href;
+        }
     }
 
     function startDrag(event, item) {
@@ -199,7 +209,6 @@
         const item = pickupTarget(event);
         if (!item) return;
         press = { item: item, id: event.pointerId, x: event.clientX, y: event.clientY };
-        try { item.setPointerCapture(event.pointerId); } catch (error) {}
     }
 
     function onPointerMove(event) {
@@ -212,19 +221,24 @@
         const dist = Math.hypot(event.clientX - press.x, event.clientY - press.y);
         if (dist < MOVE_PX) return;
         event.preventDefault();
+        try { press.item.setPointerCapture(event.pointerId); } catch (error) {}
         startDrag(event, press.item);
     }
 
     function onPointerUp(event) {
         if (!press || event.pointerId !== press.id) return;
+        const item = press.item;
         if (drag) {
             event.preventDefault();
             finish(event.clientX, event.clientY);
+            press = null;
+            window.setTimeout(function () { didDrag = false; }, 350);
+            return;
         }
         press = null;
-        if (didDrag) {
-            window.setTimeout(function () { didDrag = false; }, 350);
-        }
+        didDrag = true;
+        openItem(item);
+        window.setTimeout(function () { didDrag = false; }, 350);
     }
 
     document.addEventListener('pointerdown', onPointerDown);
@@ -239,6 +253,8 @@
     }, true);
 
     document.addEventListener('dragstart', function (event) {
-        event.preventDefault();
+        if (event.target.closest && event.target.closest('.home-item')) {
+            event.preventDefault();
+        }
     });
 })();

@@ -51,11 +51,10 @@ def icon_hosts(url):
 
     add(host)
     bare = host[4:] if host.startswith('www.') else host
-    add(bare)
+    if bare != host:
+        add(bare)
     parts = [part for part in bare.split('.') if part]
-    if len(parts) == 2:
-        add(f'www.{bare}')
-    elif len(parts) >= 3:
+    if len(parts) >= 3:
         tail = '.'.join(parts[-2:])
         if tail in MULTI_TLDS:
             if len(parts) >= 4:
@@ -63,8 +62,16 @@ def icon_hosts(url):
         else:
             add('.'.join(parts[1:]))
             add(tail)
-    hosts.sort(key=lambda name: (name.count('.'), len(name)))
     return hosts
+
+
+def is_apex_host(name):
+    parts = [part for part in name.split('.') if part]
+    if len(parts) == 2:
+        return True
+    if len(parts) == 3 and '.'.join(parts[-2:]) in MULTI_TLDS:
+        return True
+    return False
 
 
 def icon_candidates(url):
@@ -73,7 +80,6 @@ def icon_candidates(url):
     if not hosts:
         return []
     scheme = parsed.scheme or 'https'
-    origin = (parsed.hostname or '').lower().strip('.')
     urls = []
     seen = set()
 
@@ -82,18 +88,21 @@ def icon_candidates(url):
             seen.add(candidate)
             urls.append(candidate)
 
-    for name in hosts:
-        add(f'https://www.google.com/s2/favicons?sz=256&domain={name}')
-    for name in hosts:
-        add(f'https://favicone.com/{name}?s=256')
-    for name in hosts:
+    def add_direct(name):
         add(f'{scheme}://{name}/apple-touch-icon.png')
         add(f'{scheme}://{name}/apple-touch-icon-precomposed.png')
-    if origin:
-        add(f'{scheme}://{origin}/favicon.png')
-        add(f'{scheme}://{origin}/favicon.ico')
-    for name in hosts:
+        add(f'{scheme}://{name}/favicon.png')
+        add(f'{scheme}://{name}/favicon.ico')
+        add(f'https://favicone.com/{name}?s=256')
         add(f'https://icons.duckduckgo.com/ip3/{name}.ico')
+
+    exact, *parents = hosts
+    add_direct(exact)
+    if is_apex_host(exact):
+        add(f'https://www.google.com/s2/favicons?sz=256&domain={exact}')
+    for name in parents:
+        add_direct(name)
+        add(f'https://www.google.com/s2/favicons?sz=256&domain={name}')
     return urls
 
 
