@@ -5,8 +5,8 @@ from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import URLValidator
 
-from .importers import random_pastel_hex
 from .models import Bookmark, Folder
+from .utils import random_pastel_hex
 
 INPUT_CLASS = (
     'mt-1 w-full rounded-2xl border-0 bg-white/90 px-4 py-3 text-slate-900 '
@@ -89,15 +89,6 @@ class FolderForm(forms.ModelForm):
         if not (value.startswith('#') and len(value) == 7):
             raise forms.ValidationError('Pick a color.')
         return value
-
-
-class ExtractForm(forms.Form):
-    file = forms.FileField(
-        widget=forms.FileInput(attrs={
-            'class': INPUT_CLASS,
-            'accept': '.html,.htm,.json,.xml,text/html,application/json,application/xml',
-        }),
-    )
 
 
 class RegistrationForm(UserCreationForm):

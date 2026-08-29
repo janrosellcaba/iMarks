@@ -1,12 +1,12 @@
-from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import BookmarkForm, ExtractForm, FolderForm, RegistrationForm
-from .importers import favicon_for_url, import_export
+from .forms import BookmarkForm, FolderForm, RegistrationForm
 from .models import Bookmark, Folder
+from .utils import favicon_for_url, netscape_export
 
 
 def after_bookmark_save(bookmark):
@@ -129,27 +129,17 @@ def manage(request):
 
 
 @login_required
-def extract_bookmarks(request):
-    if request.method == 'POST':
-        form = ExtractForm(request.POST, request.FILES)
-        if form.is_valid():
-            uploaded = form.cleaned_data['file']
-            try:
-                content = uploaded.read().decode('utf-8-sig')
-                bookmarks_created, folders_created = import_export(request.user, content)
-            except (UnicodeDecodeError, ValueError) as exc:
-                message = str(exc) if isinstance(exc, ValueError) else 'Could not read this file as text.'
-                form.add_error('file', message)
-            else:
-                messages.success(
-                    request,
-                    f'Extracted {bookmarks_created} bookmark{"" if bookmarks_created == 1 else "s"}'
-                    f' and {folders_created} folder{"" if folders_created == 1 else "s"}.',
-                )
-                return redirect('home')
-    else:
-        form = ExtractForm()
-    return render(request, 'bookmarks/extract.html', {'form': form})
+def export_bookmarks(request):
+    folders = (
+        Folder.objects
+        .filter(user=request.user)
+        .prefetch_related('bookmarks')
+    )
+    unfiled = Bookmark.objects.filter(user=request.user, folder__isnull=True)
+    html = netscape_export(folders, unfiled)
+    response = HttpResponse(html, content_type='text/html; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="bookmarks.html"'
+    return response
 
 
 def register(request):

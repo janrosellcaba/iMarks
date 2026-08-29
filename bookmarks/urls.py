@@ -10,5 +10,5 @@ urlpatterns = [
     path('folders/add/', views.add_folder, name='add_folder'),
     path('folders/<int:pk>/edit/', views.edit_folder, name='edit_folder'),
     path('manage/', views.manage, name='manage'),
-    path('extract/', views.extract_bookmarks, name='extract'),
+    path('export/', views.export_bookmarks, name='export'),
 ]

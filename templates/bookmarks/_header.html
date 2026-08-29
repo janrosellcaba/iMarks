@@ -8,7 +8,7 @@
         {% endif %}
     </div>
     <div class="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-        <a href="{% url 'extract' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Extract</a>
+        <a href="{% url 'export' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Export</a>
         <a href="{% url 'add_folder' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Folder</a>
         <a href="{% url 'manage' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Manage</a>
         <a href="{% url 'add_bookmark' %}{% if folder %}?folder={{ folder.pk }}{% endif %}" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl font-medium leading-none text-slate-900" aria-label="Add bookmark">+</a>
