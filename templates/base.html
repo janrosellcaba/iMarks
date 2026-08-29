@@ -5,6 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{% block title %}iMarks{% endblock %}</title>
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="iMarks">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" href="/favicon.ico?v=4" type="image/x-icon" sizes="any">
     <link rel="shortcut icon" href="/favicon.ico?v=4">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
@@ -49,7 +55,13 @@
         summary::-webkit-details-marker { display: none; }
         body.is-dragging { cursor: grabbing; }
         body.is-dragging .folder-scrim { pointer-events: none; }
-        .home-item img { image-rendering: auto; }
+        .home-item {
+            cursor: grab;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
         .folder-tray { cursor: default; }
         .home-item.is-ghost { opacity: 0.35; }
         .home-item.is-drop-on { transform: scale(1.08); }
@@ -65,5 +77,10 @@
 </head>
 <body class="min-h-screen bg-[radial-gradient(1200px_circle_at_20%_10%,#7dd3fc_0%,transparent_45%),radial-gradient(900px_circle_at_90%_20%,#c4b5fd_0%,transparent_40%),linear-gradient(180deg,#1e293b_0%,#0f172a_55%,#1e1b4b_100%)] font-sans text-white antialiased">
     {% block content %}{% endblock %}
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+        }
+    </script>
 </body>
 </html>

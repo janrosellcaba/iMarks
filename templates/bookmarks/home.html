@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}iMarks{% endblock %}
 
@@ -21,7 +20,7 @@
     <main id="home-desktop" class="flex flex-wrap items-start gap-x-4 gap-y-5" data-arrange-url="{% url 'arrange' %}" data-home-url="{% url 'home' %}">
         {% for item in home_items %}
             {% if item.kind == 'folder' %}
-                <div class="home-item relative z-20 shrink-0 touch-manipulation select-none" data-type="folder" data-id="{{ item.folder.pk }}">
+                <div class="home-item relative shrink-0 select-none" data-type="folder" data-id="{{ item.folder.pk }}">
                     <a href="{% if open_folder.pk == item.folder.pk %}{% url 'home' %}{% else %}{% url 'home' %}?open={{ item.folder.pk }}{% endif %}"
                        draggable="false"
                        class="flex w-[4.75rem] flex-col items-center gap-1.5 sm:w-[5.5rem]"
@@ -65,5 +64,5 @@
         </div>
     </section>
 {% endif %}
-<script src="{% static 'home.js' %}?v=5"></script>
+<script src="/home.js?v=6"></script>
 {% endblock %}

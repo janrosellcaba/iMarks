@@ -4,11 +4,10 @@
 
     const arrangeUrl = desktop.dataset.arrangeUrl;
     const homeUrl = desktop.dataset.homeUrl || '/';
-    const HOLD_MS = 360;
-    const MOVE_PX = 6;
+    const MOVE_PX = 8;
     let press = null;
     let drag = null;
-    let suppressClick = false;
+    let didDrag = false;
 
     function csrfToken() {
         const field = document.querySelector('[name=csrfmiddlewaretoken]');
@@ -20,6 +19,7 @@
     function post(payload) {
         return fetch(arrangeUrl, {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken(),
@@ -48,7 +48,7 @@
     }
 
     function clearDrop() {
-        desktop.querySelectorAll('.is-drop-on').forEach(function (el) {
+        document.querySelectorAll('.is-drop-on').forEach(function (el) {
             el.classList.remove('is-drop-on');
         });
     }
@@ -62,7 +62,7 @@
         const folderItem = el.closest('.home-item[data-type="folder"]');
         const closedFolder = folderItem && folderItem.dataset.open !== '1' ? folderItem : null;
         const tray = el.closest('.folder-tray');
-        return { el, app, closedFolder, tray, desktop: el.closest('#home-desktop') };
+        return { el, app, closedFolder, tray };
     }
 
     function insertIndex(items, x, y) {
@@ -85,16 +85,6 @@
         else container.appendChild(dragged);
     }
 
-    function openItem(item) {
-        const link = item.querySelector('a[href]');
-        if (!link) return;
-        if (link.target === '_blank') {
-            window.open(link.href, '_blank', 'noopener,noreferrer');
-        } else {
-            window.location.href = link.href;
-        }
-    }
-
     function startDrag(event, item) {
         if (drag) return;
         const box = item.getBoundingClientRect();
@@ -106,14 +96,13 @@
         document.body.appendChild(ghost);
         item.classList.add('is-ghost');
         document.body.classList.add('is-dragging');
-        try { item.setPointerCapture(event.pointerId); } catch (error) {}
         drag = {
             el: item,
             ghost,
             offsetX: event.clientX - box.left,
             offsetY: event.clientY - box.top,
         };
-        suppressClick = true;
+        didDrag = true;
         moveGhost(event.clientX, event.clientY);
     }
 
@@ -159,7 +148,6 @@
         clearDrop();
 
         const reload = function () { window.location.reload(); };
-        const fail = function () { window.location.reload(); };
 
         if (type === 'bookmark') {
             if (over.closedFolder) {
@@ -168,7 +156,7 @@
                     bookmark_id: id,
                     folder_id: Number(over.closedFolder.dataset.id),
                     index: 999,
-                }).then(reload).catch(fail);
+                }).then(reload).catch(reload);
                 return;
             }
             if (over.app && Number(over.app.dataset.id) !== id && !over.app.dataset.folder && !fromFolder) {
@@ -178,14 +166,14 @@
                     onto_bookmark_id: Number(over.app.dataset.id),
                 }).then(function (data) {
                     window.location.href = data.folder_id ? homeUrl + '?open=' + data.folder_id : homeUrl;
-                }).catch(fail);
+                }).catch(reload);
                 return;
             }
             if (fromFolder && over.tray && Number(over.tray.dataset.id) === fromFolder) {
                 const ids = [...over.tray.querySelectorAll('.home-item[data-type="bookmark"]')].map(function (el) {
                     return Number(el.dataset.id);
                 });
-                post({ op: 'reorder_folder', folder_id: fromFolder, bookmark_ids: ids }).catch(fail);
+                post({ op: 'reorder_folder', folder_id: fromFolder, bookmark_ids: ids }).catch(reload);
                 return;
             }
             if (fromFolder) {
@@ -194,109 +182,63 @@
                     x,
                     y,
                 );
-                post({ op: 'move', bookmark_id: id, folder_id: null, index: idx }).then(reload).catch(fail);
+                post({ op: 'move', bookmark_id: id, folder_id: null, index: idx }).then(reload).catch(reload);
                 return;
             }
-            post({ op: 'reorder_home', items: homePayload() }).catch(fail);
+            post({ op: 'reorder_home', items: homePayload() }).catch(reload);
             return;
         }
         if (type === 'folder') {
-            post({ op: 'reorder_home', items: homePayload() }).catch(fail);
+            post({ op: 'reorder_home', items: homePayload() }).catch(reload);
         }
     }
 
-    function unbindDocument() {
-        document.removeEventListener('pointermove', onPointerMove);
-        document.removeEventListener('pointerup', onPointerUp);
-        document.removeEventListener('pointercancel', onPointerUp);
-    }
-
-    function cancelPress() {
-        if (press && press.timer) window.clearTimeout(press.timer);
-        press = null;
-        unbindDocument();
+    function onPointerDown(event) {
+        if (event.isPrimary === false) return;
+        if (event.button !== 0 && event.button !== -1) return;
+        const item = pickupTarget(event);
+        if (!item) return;
+        press = { item: item, id: event.pointerId, x: event.clientX, y: event.clientY };
+        try { item.setPointerCapture(event.pointerId); } catch (error) {}
     }
 
     function onPointerMove(event) {
-        if (press && event.pointerId !== press.pointerId) return;
+        if (!press || event.pointerId !== press.id) return;
         if (drag) {
             event.preventDefault();
             moveGhost(event.clientX, event.clientY);
             return;
         }
-        if (!press) return;
-        const dist = Math.hypot(event.clientX - press.startX, event.clientY - press.startY);
-        if (press.pointerType === 'touch' && dist > MOVE_PX && !press.lifted) {
-            cancelPress();
-            return;
-        }
-        if (dist > MOVE_PX) {
-            const item = press.item;
-            const pointerId = press.pointerId;
-            if (press.timer) window.clearTimeout(press.timer);
-            press.timer = null;
-            press.lifted = true;
-            startDrag(event, item);
-            try { item.setPointerCapture(pointerId); } catch (error) {}
-            moveGhost(event.clientX, event.clientY);
-        }
+        const dist = Math.hypot(event.clientX - press.x, event.clientY - press.y);
+        if (dist < MOVE_PX) return;
+        event.preventDefault();
+        startDrag(event, press.item);
     }
 
     function onPointerUp(event) {
-        if (press && event.pointerId !== press.pointerId) return;
+        if (!press || event.pointerId !== press.id) return;
         if (drag) {
             event.preventDefault();
             finish(event.clientX, event.clientY);
-            cancelPress();
-            window.setTimeout(function () { suppressClick = false; }, 250);
-            return;
         }
-        const item = press && press.item;
-        const wasMouse = press && press.pointerType !== 'touch';
-        cancelPress();
-        if (item && wasMouse) {
-            suppressClick = true;
-            openItem(item);
-            window.setTimeout(function () { suppressClick = false; }, 250);
+        press = null;
+        if (didDrag) {
+            window.setTimeout(function () { didDrag = false; }, 350);
         }
     }
 
-    document.addEventListener('pointerdown', function (event) {
-        if (event.button !== 0) return;
-        const item = pickupTarget(event);
-        if (!item) return;
-        if (event.pointerType !== 'touch') {
-            event.preventDefault();
-        }
-        press = {
-            item: item,
-            startX: event.clientX,
-            startY: event.clientY,
-            pointerId: event.pointerId,
-            pointerType: event.pointerType,
-            lifted: false,
-        };
-        document.addEventListener('pointermove', onPointerMove, { passive: false });
-        document.addEventListener('pointerup', onPointerUp);
-        document.addEventListener('pointercancel', onPointerUp);
-        if (event.pointerType === 'touch') {
-            press.timer = window.setTimeout(function () {
-                if (!press || press.item !== item) return;
-                press.lifted = true;
-                startDrag(event, item);
-            }, HOLD_MS);
-        }
-    });
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointermove', onPointerMove, { passive: false });
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
 
     document.addEventListener('click', function (event) {
-        if (!suppressClick) return;
+        if (!didDrag) return;
         event.preventDefault();
         event.stopPropagation();
     }, true);
 
     document.addEventListener('dragstart', function (event) {
-        if (event.target.closest && event.target.closest('.home-item')) {
-            event.preventDefault();
-        }
+        event.preventDefault();
     });
 })();

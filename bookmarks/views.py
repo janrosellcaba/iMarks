@@ -6,6 +6,7 @@ from django.db.models import Count, Prefetch
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from .arrange import (
@@ -34,6 +35,7 @@ def after_bookmark_save(bookmark):
 
 
 @login_required
+@ensure_csrf_cookie
 def home(request, folder_id=None):
     if folder_id:
         return home_with_folder(folder_id)

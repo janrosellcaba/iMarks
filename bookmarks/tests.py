@@ -211,6 +211,25 @@ class FaviconAndIconTests(TestCase):
     def test_hex_to_rgba_is_transparent(self):
         self.assertEqual(hex_to_rgba('#F87171', 0.28), 'rgba(248, 113, 113, 0.28)')
 
+
+class PwaTests(TestCase):
+    def test_manifest_and_service_worker(self):
+        manifest = self.client.get('/manifest.webmanifest')
+        self.assertEqual(manifest.status_code, 200)
+        self.assertIn('standalone', manifest.json()['display'])
+        worker = self.client.get('/sw.js')
+        self.assertEqual(worker.status_code, 200)
+        self.assertEqual(worker['Service-Worker-Allowed'], '/')
+        script = self.client.get('/home.js')
+        self.assertEqual(script.status_code, 200)
+        body = b''.join(script.streaming_content)
+        self.assertIn(b'pointerdown', body)
+
+    def test_pages_link_manifest(self):
+        response = self.client.get(reverse('login'))
+        self.assertContains(response, '/manifest.webmanifest')
+        self.assertContains(response, 'apple-mobile-web-app-capable')
+
     def test_icon_candidates_include_fallbacks(self):
         urls = icon_candidates('https://www.djangoproject.com/')
         joined = ' '.join(urls)
