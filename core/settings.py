@@ -5,6 +5,20 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def load_env(path):
+    if not path.exists():
+        return
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, _, value = line.partition('=')
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+load_env(BASE_DIR / '.env')
+
+
 def env_list(name, default):
     return [item.strip() for item in os.getenv(name, default).split(',') if item.strip()]
 
@@ -23,7 +37,7 @@ ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'i.janrosell.com,localhost,127.0.0.1')
 
 CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', 'https://i.janrosell.com')
 
-REGISTRATION_REQUEST_NUMBER = os.getenv('REGISTRATION_REQUEST_NUMBER', '123456')
+REGISTRATION_REQUEST_NUMBER = os.getenv('REGISTRATION_REQUEST_NUMBER', '01234')
 
 
 # Application definition

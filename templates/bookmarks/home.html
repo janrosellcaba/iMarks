@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if folder %}{{ folder.name }} · iMarks{% else %}iMarks{% endif %}{% endblock %}
+{% block title %}iMarks{% endblock %}
 
 {% block content %}
 <div class="mx-auto min-h-screen max-w-5xl px-4 pb-12 pt-6 sm:px-6">
@@ -14,8 +14,12 @@
 
     <main class="grid grid-cols-4 gap-x-4 gap-y-6 md:grid-cols-8">
         {% for item in folders %}
-            <a href="{% url 'folder' item.pk %}" class="flex flex-col items-center gap-2" title="{{ item.name }}">
-                <span class="relative aspect-square w-full max-w-[4.75rem] overflow-hidden rounded-ios shadow-sm sm:max-w-[5.5rem]"
+            {% if open_folder.pk == item.pk %}
+                <a href="{% url 'home' %}" class="flex flex-col items-center gap-2" title="Close {{ item.name }}">
+            {% else %}
+                <a href="{% url 'home' %}?open={{ item.pk }}" class="flex flex-col items-center gap-2" title="{{ item.name }}">
+            {% endif %}
+                <span class="relative aspect-square w-full max-w-[4.75rem] overflow-hidden rounded-ios shadow-sm sm:max-w-[5.5rem] {% if open_folder.pk == item.pk %}ring-2 ring-white/80{% endif %}"
                       style="background-color: {{ item.color }}">
                     <span class="absolute inset-1.5 grid grid-cols-2 grid-rows-2 gap-0.5">
                         {% for bookmark in item.bookmarks.all|slice:":4" %}
@@ -29,31 +33,20 @@
                 </span>
                 <span class="w-full truncate text-center text-xs text-white/90">{{ item.name }}</span>
             </a>
+            {% if open_folder.pk == item.pk %}
+                {% for bookmark in item.bookmarks.all %}
+                    {% include "bookmarks/_bookmark_tile.html" %}
+                {% endfor %}
+            {% endif %}
         {% endfor %}
 
         {% for bookmark in bookmarks %}
-            <a href="{{ bookmark.url }}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2" title="{{ bookmark.title }}">
-                <span class="relative aspect-square w-full max-w-[4.75rem] overflow-hidden rounded-ios shadow-sm sm:max-w-[5.5rem]"
-                      style="background-color: {{ bookmark.tile_color }}">
-                    {% if bookmark.icon_url %}
-                        <img src="{{ bookmark.icon_url }}" alt="" class="absolute inset-0 h-full w-full object-cover"
-                            onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-                        <span class="hidden absolute inset-0 flex items-center justify-center text-lg font-semibold text-slate-700">{{ bookmark.title.0 }}</span>
-                    {% else %}
-                        <span class="absolute inset-0 flex items-center justify-center text-lg font-semibold text-slate-700">{{ bookmark.title.0 }}</span>
-                    {% endif %}
-                </span>
-                <span class="w-full truncate text-center text-xs text-white/90">{{ bookmark.title }}</span>
-            </a>
+            {% include "bookmarks/_bookmark_tile.html" %}
         {% endfor %}
 
         {% if not folders and not bookmarks %}
             <p class="col-span-4 md:col-span-8 mt-16 text-center text-white/70">
-                {% if folder %}
-                    This folder is empty. Tap + to add a bookmark.
-                {% else %}
-                    No bookmarks yet. Tap + to add one.
-                {% endif %}
+                No bookmarks yet. Tap + to add one.
             </p>
         {% endif %}
     </main>

@@ -16,11 +16,19 @@
             {{ form.name }}
             {{ form.name.errors }}
         </label>
-        <label class="block text-sm text-white/80">
-            Color
-            {{ form.color }}
+        <div>
+            <p class="mb-3 text-sm text-white/80">Color</p>
+            <div class="grid grid-cols-8 gap-3">
+                {% for value, label in form.color.field.choices %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="color" value="{{ value }}" class="peer sr-only"
+                            {% if form.color.value == value %}checked{% endif %} required>
+                        <span class="block h-9 w-9 rounded-full shadow-sm ring-2 ring-transparent ring-offset-2 ring-offset-slate-900 peer-checked:ring-white" style="background-color: {{ value }}"></span>
+                    </label>
+                {% endfor %}
+            </div>
             {{ form.color.errors }}
-        </label>
+        </div>
         <button type="submit" class="w-full rounded-2xl bg-white py-3 font-semibold text-slate-900">Save</button>
         {% if folder %}
             <button type="submit" name="delete" value="1" class="w-full rounded-2xl bg-white/10 py-3 font-semibold text-rose-200"

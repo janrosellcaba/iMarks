@@ -1,36 +1,45 @@
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from .forms import BookmarkForm, FolderForm, RegistrationForm
 from .models import Bookmark, Folder
 from .utils import favicon_for_url, netscape_export
 
 
+def home_with_folder(folder_id):
+    url = reverse('home')
+    if folder_id:
+        return redirect(f'{url}?open={folder_id}')
+    return redirect(url)
+
+
 def after_bookmark_save(bookmark):
-    if bookmark.folder_id:
-        return redirect('folder', bookmark.folder_id)
-    return redirect('home')
+    return home_with_folder(bookmark.folder_id)
 
 
 @login_required
 def home(request, folder_id=None):
-    folder = None
-    folders = []
     if folder_id:
-        folder = get_object_or_404(Folder, pk=folder_id, user=request.user)
-        bookmarks = folder.bookmarks.select_related('folder')
-    else:
-        folders = (
-            Folder.objects
-            .filter(user=request.user)
-            .prefetch_related('bookmarks')
-        )
-        bookmarks = Bookmark.objects.filter(user=request.user, folder__isnull=True)
+        return home_with_folder(folder_id)
+
+    open_folder = None
+    open_id = request.GET.get('open')
+    if open_id:
+        open_folder = Folder.objects.filter(pk=open_id, user=request.user).first()
+
+    folders = (
+        Folder.objects
+        .filter(user=request.user)
+        .prefetch_related('bookmarks')
+    )
+    bookmarks = Bookmark.objects.filter(user=request.user, folder__isnull=True)
     return render(request, 'bookmarks/home.html', {
-        'folder': folder,
+        'open_folder': open_folder,
         'folders': folders,
         'bookmarks': bookmarks,
     })
@@ -68,7 +77,7 @@ def edit_bookmark(request, pk):
             folder_id = bookmark.folder_id
             bookmark.delete()
             if folder_id:
-                return redirect('folder', folder_id)
+                return home_with_folder(folder_id)
             return redirect('manage')
         form = BookmarkForm(request.POST, user=request.user, instance=bookmark)
         if form.is_valid():
@@ -154,3 +163,12 @@ def register(request):
     else:
         form = RegistrationForm()
     return render(request, 'registration/register.html', {'form': form})
+
+
+@login_required
+@require_POST
+def delete_account(request):
+    user = request.user
+    logout(request)
+    user.delete()
+    return redirect('login')

@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import URLValidator
 
 from .models import Bookmark, Folder
-from .utils import random_pastel_hex
+from .utils import FOLDER_COLORS, default_folder_color
 
 INPUT_CLASS = (
     'mt-1 w-full rounded-2xl border-0 bg-white/90 px-4 py-3 text-slate-900 '
@@ -61,6 +61,13 @@ class BookmarkForm(forms.ModelForm):
 
 
 class FolderForm(forms.ModelForm):
+    color = forms.ChoiceField(
+        choices=[(c, c) for c in FOLDER_COLORS],
+        widget=forms.RadioSelect,
+        initial=default_folder_color,
+        required=False,
+    )
+
     class Meta:
         model = Folder
         fields = ['name', 'color']
@@ -70,25 +77,31 @@ class FolderForm(forms.ModelForm):
                 'placeholder': 'Folder name',
                 'autofocus': True,
             }),
-            'color': forms.TextInput(attrs={
-                'type': 'color',
-                'class': 'mt-1 h-12 w-full cursor-pointer rounded-2xl border-0 bg-white/90 p-1',
-            }),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['color'].required = False
-        if not self.is_bound and not self.initial.get('color') and not (self.instance and self.instance.pk and self.instance.color):
-            self.initial['color'] = random_pastel_hex()
+        current = ''
+        if self.instance.pk:
+            current = (self.instance.color or '').upper()
+        choices = list(FOLDER_COLORS)
+        if current and current not in choices:
+            choices = [self.instance.color] + choices
+        self.fields['color'].choices = [(c, c) for c in choices]
+        if not self.is_bound and not self.initial.get('color'):
+            self.initial['color'] = self.instance.color if self.instance.pk else default_folder_color()
 
     def clean_color(self):
         value = (self.cleaned_data.get('color') or '').strip()
         if not value:
-            value = self.initial.get('color') or random_pastel_hex()
-        if not (value.startswith('#') and len(value) == 7):
+            return default_folder_color()
+        allowed = {c.upper() for c, _ in self.fields['color'].choices}
+        if value.upper() not in allowed:
             raise forms.ValidationError('Pick a color.')
-        return value
+        for choice, _label in self.fields['color'].choices:
+            if choice.upper() == value.upper():
+                return choice
+        return default_folder_color()
 
 
 class RegistrationForm(UserCreationForm):

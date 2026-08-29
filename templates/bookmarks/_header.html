@@ -3,18 +3,26 @@
         {% if folder %}
             <a href="{% url 'home' %}" class="text-sm text-white/80 hover:text-white">Back</a>
             <h1 class="truncate text-2xl font-semibold tracking-tight">{{ folder.name }}</h1>
+        {% elif heading %}
+            <a href="{% url 'home' %}" class="text-sm text-white/80 hover:text-white">Back</a>
+            <h1 class="truncate text-2xl font-semibold tracking-tight">{{ heading }}</h1>
         {% else %}
-            <h1 class="text-2xl font-semibold tracking-tight">{% firstof heading "iMarks" %}</h1>
+            <h1 class="text-2xl font-semibold tracking-tight">iMarks</h1>
         {% endif %}
     </div>
     <div class="flex flex-shrink-0 items-center gap-2 sm:gap-3">
         <a href="{% url 'export' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Export</a>
         <a href="{% url 'add_folder' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Folder</a>
         <a href="{% url 'manage' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Manage</a>
-        <a href="{% url 'add_bookmark' %}{% if folder %}?folder={{ folder.pk }}{% endif %}" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl font-medium leading-none text-slate-900" aria-label="Add bookmark">+</a>
+        <a href="{% url 'add_bookmark' %}{% if open_folder %}?folder={{ open_folder.pk }}{% endif %}" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl font-medium leading-none text-slate-900" aria-label="Add bookmark">+</a>
         <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
             <button type="submit" class="rounded-full px-2 py-1.5 text-sm text-white/80 hover:text-white">Logout</button>
+        </form>
+        <form method="post" action="{% url 'delete_account' %}"
+            onsubmit="return confirm('Delete your account?') && confirm('All bookmarks and folders will be removed.') && confirm('Last chance. Delete everything?');">
+            {% csrf_token %}
+            <button type="submit" class="rounded-full px-2 py-1.5 text-sm text-rose-200 hover:text-rose-100">Delete account</button>
         </form>
     </div>
 </header>

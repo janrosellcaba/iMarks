@@ -21,6 +21,10 @@ class BookmarkAuthTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse('login'), response.url)
 
+    def test_delete_account_requires_post(self):
+        response = self.client.get(reverse('delete_account'))
+        self.assertEqual(response.status_code, 302)
+
 
 @override_settings(REGISTRATION_REQUEST_NUMBER='123456')
 class RegistrationTests(TestCase):
@@ -68,8 +72,9 @@ class BookmarkViewTests(TestCase):
         self.assertNotContains(response, 'Django')
         self.assertNotContains(response, 'Theirs')
 
-        opened = self.client.get(reverse('folder', args=[folder.pk]))
+        opened = self.client.get(reverse('home'), {'open': folder.pk})
         self.assertContains(opened, 'Django')
+        self.assertContains(opened, 'Mine')
         self.assertContains(opened, 'Dev')
 
     def test_edit_bookmark_and_folder(self):
@@ -88,11 +93,11 @@ class BookmarkViewTests(TestCase):
 
         self.client.post(reverse('edit_folder', args=[folder.pk]), {
             'name': 'Work',
-            'color': '#ff00aa',
+            'color': '#F472B6',
         })
         folder.refresh_from_db()
         self.assertEqual(folder.name, 'Work')
-        self.assertEqual(folder.color, '#ff00aa')
+        self.assertEqual(folder.color, '#F472B6')
 
     def test_manage_lists_items(self):
         Folder.objects.create(user=self.user, name='Dev', color='#bae1ff')
@@ -137,8 +142,7 @@ class BookmarkViewTests(TestCase):
         response = self.client.post(reverse('add_folder'), {'name': 'Work'})
         self.assertRedirects(response, reverse('home'))
         folder = Folder.objects.get(name='Work', user=self.user)
-        self.assertTrue(folder.color.startswith('#'))
-        self.assertEqual(len(folder.color), 7)
+        self.assertEqual(folder.color, '#F87171')
 
     def test_export_netscape_html(self):
         folder = Folder.objects.create(user=self.user, name='Dev', color='#bae1ff')
@@ -159,3 +163,10 @@ class BookmarkViewTests(TestCase):
         self.assertIn('Django', body)
         self.assertIn('<H3>Dev</H3>', body)
         self.assertNotIn('Theirs', body)
+
+    def test_delete_account_removes_user(self):
+        Bookmark.objects.create(user=self.user, title='Mine', url='https://example.com')
+        response = self.client.post(reverse('delete_account'))
+        self.assertRedirects(response, reverse('login'))
+        self.assertFalse(User.objects.filter(username='jan').exists())
+        self.assertEqual(Bookmark.objects.count(), 0)

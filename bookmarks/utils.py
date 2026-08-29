@@ -1,7 +1,24 @@
-import colorsys
-import random
 from html import escape
 from urllib.parse import urlparse
+
+FOLDER_COLORS = (
+    '#F87171',
+    '#FB923C',
+    '#FBBF24',
+    '#A3E635',
+    '#4ADE80',
+    '#2DD4BF',
+    '#22D3EE',
+    '#38BDF8',
+    '#60A5FA',
+    '#818CF8',
+    '#A78BFA',
+    '#E879F9',
+    '#F472B6',
+    '#FB7185',
+    '#A8A29E',
+    '#E2E8F0',
+)
 
 
 def favicon_for_url(url):
@@ -11,10 +28,8 @@ def favicon_for_url(url):
     return f'https://www.google.com/s2/favicons?domain={hostname}&sz=256'
 
 
-def random_pastel_hex():
-    hue = random.random()
-    r, g, b = colorsys.hsv_to_rgb(hue, 0.32, 0.94)
-    return f'#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}'
+def default_folder_color():
+    return FOLDER_COLORS[0]
 
 
 def _anchor(bookmark):
