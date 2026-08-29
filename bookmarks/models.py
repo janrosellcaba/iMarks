@@ -32,7 +32,7 @@ class Bookmark(models.Model):
         on_delete=models.SET_NULL,
         related_name='bookmarks',
     )
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, blank=True)
     url = models.URLField(max_length=2048)
     icon_url = models.URLField(max_length=2048, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

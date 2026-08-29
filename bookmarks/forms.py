@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import URLValidator
 
 from .models import Bookmark, Folder
-from .utils import FOLDER_COLORS, default_folder_color
+from .utils import FOLDER_COLORS, default_folder_color, title_from_url
 
 INPUT_CLASS = (
     'mt-1 w-full rounded-2xl border-0 bg-white/90 px-4 py-3 text-slate-900 '
@@ -21,6 +21,7 @@ class BookmarkForm(forms.ModelForm):
             'placeholder': 'example.com',
             'inputmode': 'url',
             'autocomplete': 'url',
+            'autofocus': True,
         }),
     )
 
@@ -30,8 +31,7 @@ class BookmarkForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': INPUT_CLASS,
-                'placeholder': 'Title',
-                'autofocus': True,
+                'placeholder': 'Title (optional)',
             }),
             'folder': forms.Select(attrs={'class': INPUT_CLASS}),
         }
@@ -39,6 +39,7 @@ class BookmarkForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
+        self.fields['title'].required = False
         self.fields['folder'].required = False
         self.fields['folder'].empty_label = 'No folder'
         if user is not None:
@@ -58,6 +59,15 @@ class BookmarkForm(forms.ModelForm):
             if existing.exists():
                 raise forms.ValidationError('You already saved this URL.')
         return url
+
+    def clean(self):
+        cleaned = super().clean()
+        title = (cleaned.get('title') or '').strip()
+        url = cleaned.get('url')
+        if not title and url:
+            title = title_from_url(url)
+        cleaned['title'] = title[:200]
+        return cleaned
 
 
 class FolderForm(forms.ModelForm):

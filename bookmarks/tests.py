@@ -129,6 +129,14 @@ class BookmarkViewTests(TestCase):
         self.assertEqual(bookmark.url, 'https://bitwarden.com')
         self.assertIn('bitwarden.com', bookmark.icon_url)
 
+    def test_add_bookmark_without_title_uses_domain(self):
+        response = self.client.post(reverse('add_bookmark'), {
+            'title': '',
+            'url': 'https://app.jan.com',
+        })
+        self.assertRedirects(response, reverse('home'))
+        self.assertEqual(Bookmark.objects.get(url='https://app.jan.com').title, 'jan')
+
     def test_duplicate_url_is_rejected(self):
         Bookmark.objects.create(user=self.user, title='One', url='https://example.com/')
         response = self.client.post(reverse('add_bookmark'), {

@@ -1,5 +1,5 @@
-<a href="{{ bookmark.url }}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2" title="{{ bookmark.title }}">
-    <span class="relative aspect-square w-full max-w-[4.75rem] overflow-hidden rounded-ios shadow-sm sm:max-w-[5.5rem]"
+<a href="{{ bookmark.url }}" target="_blank" rel="noopener noreferrer" class="flex w-[4.75rem] shrink-0 flex-col items-center gap-2 sm:w-[5.5rem]" title="{{ bookmark.title }}">
+    <span class="relative aspect-square w-full overflow-hidden rounded-ios shadow-sm"
           style="background-color: {% if on_light %}rgba(255,255,255,0.55){% else %}{{ bookmark.tile_color }}{% endif %}">
         {% if bookmark.icon_url %}
             <img src="{{ bookmark.icon_url }}" alt="" class="absolute inset-0 h-full w-full object-cover"

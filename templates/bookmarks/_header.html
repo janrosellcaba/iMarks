@@ -16,14 +16,21 @@
         <a href="{% url 'add_folder' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Folder</a>
         <a href="{% url 'manage' %}" class="rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">Manage</a>
         <a href="{% url 'add_bookmark' %}{% if open_folder %}?folder={{ open_folder.pk }}{% endif %}" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl font-medium leading-none text-slate-900" aria-label="Add bookmark">+</a>
-        <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="rounded-full px-2 py-1.5 text-sm text-white/80 hover:text-white">Logout</button>
-        </form>
-        <form method="post" action="{% url 'delete_account' %}"
-            onsubmit="return confirm('Delete your account?') && confirm('All bookmarks and folders will be removed.') && confirm('Last chance. Delete everything?');">
-            {% csrf_token %}
-            <button type="submit" class="rounded-full px-2 py-1.5 text-sm text-rose-200 hover:text-rose-100">Delete account</button>
-        </form>
+        <details class="relative">
+            <summary class="cursor-pointer list-none rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur hover:bg-white/25">
+                {{ request.user.username }}
+            </summary>
+            <div class="absolute right-0 z-30 mt-2 w-44 rounded-2xl bg-slate-900/95 p-2 shadow-lg ring-1 ring-white/10">
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full rounded-xl px-3 py-2 text-left text-sm text-white/90 hover:bg-white/10">Logout</button>
+                </form>
+                <form method="post" action="{% url 'delete_account' %}"
+                    onsubmit="return confirm('Delete your account?') && confirm('All bookmarks and folders will be removed.') && confirm('Last chance. Delete everything?');">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-white/10">Delete account</button>
+                </form>
+            </div>
+        </details>
     </div>
 </header>

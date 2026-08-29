@@ -32,6 +32,25 @@ def default_folder_color():
     return FOLDER_COLORS[0]
 
 
+MULTI_TLDS = {
+    'co.uk', 'com.au', 'co.jp', 'com.br', 'co.nz', 'com.mx', 'co.in', 'com.ar',
+}
+
+
+def title_from_url(url):
+    host = (urlparse(url).hostname or '').lower()
+    if host.startswith('www.'):
+        host = host[4:]
+    parts = [part for part in host.split('.') if part]
+    if not parts:
+        return 'Bookmark'
+    if len(parts) >= 3 and '.'.join(parts[-2:]) in MULTI_TLDS:
+        parts = parts[:-2]
+    elif len(parts) >= 2:
+        parts = parts[:-1]
+    return parts[-1] if parts else 'Bookmark'
+
+
 def _anchor(bookmark):
     href = escape(bookmark.url, quote=True)
     title = escape(bookmark.title)
