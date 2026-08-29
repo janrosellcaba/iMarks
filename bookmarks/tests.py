@@ -214,10 +214,18 @@ class FaviconAndIconTests(TestCase):
     def test_icon_candidates_include_fallbacks(self):
         urls = icon_candidates('https://www.djangoproject.com/')
         joined = ' '.join(urls)
-        self.assertIn('duckduckgo.com', joined)
         self.assertIn('djangoproject.com', joined)
+        self.assertIn('sz=256', joined)
         self.assertIn('google.com/s2/favicons', joined)
         self.assertIn('/favicon.ico', joined)
+
+    def test_icon_candidates_use_parent_domain_for_subdomains(self):
+        urls = icon_candidates('https://web.whatsapp.com/')
+        joined = ' '.join(urls)
+        self.assertIn('whatsapp.com', joined)
+        self.assertTrue(urls[0].endswith('domain=whatsapp.com') or 'domain=whatsapp.com' in urls[0])
+        self.assertLess(urls.index(next(u for u in urls if 'domain=whatsapp.com' in u)),
+                        urls.index(next(u for u in urls if 'duckduckgo.com' in u)))
 
 
 class ArrangeTests(TestCase):

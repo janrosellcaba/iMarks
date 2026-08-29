@@ -22,7 +22,9 @@
             if (fallback) fallback.classList.remove('hidden');
         }
         function iMarksIconCheck(img) {
-            if (img.naturalWidth && img.naturalWidth <= 16 && /google\.com\/s2\/favicons/.test(img.src)) {
+            const all = (img.dataset.icons || '').split('||').filter(Boolean);
+            const index = Number(img.dataset.iconI || 0);
+            if (img.naturalWidth && img.naturalWidth < 64 && index + 1 < all.length) {
                 iMarksIconFail(img);
             }
         }
@@ -47,7 +49,7 @@
         summary::-webkit-details-marker { display: none; }
         body.is-dragging { cursor: grabbing; }
         body.is-dragging .folder-scrim { pointer-events: none; }
-        .home-item { cursor: grab; }
+        .home-item img { image-rendering: auto; }
         .folder-tray { cursor: default; }
         .home-item.is-ghost { opacity: 0.35; }
         .home-item.is-drop-on { transform: scale(1.08); }

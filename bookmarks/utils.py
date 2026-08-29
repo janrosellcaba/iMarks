@@ -33,16 +33,47 @@ def hex_to_rgba(value, alpha=0.32):
     return f'rgba({red}, {green}, {blue}, {alpha})'
 
 
-def icon_candidates(url):
+MULTI_TLDS = {
+    'co.uk', 'com.au', 'co.jp', 'com.br', 'co.nz', 'com.mx', 'co.in', 'com.ar',
+}
+
+
+def icon_hosts(url):
     parsed = urlparse(url)
     host = (parsed.hostname or '').lower().strip('.')
     if not host:
         return []
-    hosts = [host]
-    if host.startswith('www.'):
-        hosts.append(host[4:])
-    else:
-        hosts.append(f'www.{host}')
+    hosts = []
+
+    def add(name):
+        if name and name not in hosts:
+            hosts.append(name)
+
+    add(host)
+    bare = host[4:] if host.startswith('www.') else host
+    add(bare)
+    parts = [part for part in bare.split('.') if part]
+    if len(parts) == 2:
+        add(f'www.{bare}')
+    elif len(parts) >= 3:
+        tail = '.'.join(parts[-2:])
+        if tail in MULTI_TLDS:
+            if len(parts) >= 4:
+                add('.'.join(parts[-3:]))
+        else:
+            add('.'.join(parts[1:]))
+            add(tail)
+    hosts.sort(key=lambda name: (name.count('.'), len(name)))
+    return hosts
+
+
+def icon_candidates(url):
+    parsed = urlparse(url)
+    hosts = icon_hosts(url)
+    if not hosts:
+        return []
+    scheme = parsed.scheme or 'https'
+    origin = (parsed.hostname or '').lower().strip('.')
     urls = []
     seen = set()
 
@@ -52,12 +83,17 @@ def icon_candidates(url):
             urls.append(candidate)
 
     for name in hosts:
+        add(f'https://www.google.com/s2/favicons?sz=256&domain={name}')
+    for name in hosts:
+        add(f'https://favicone.com/{name}?s=256')
+    for name in hosts:
+        add(f'{scheme}://{name}/apple-touch-icon.png')
+        add(f'{scheme}://{name}/apple-touch-icon-precomposed.png')
+    if origin:
+        add(f'{scheme}://{origin}/favicon.png')
+        add(f'{scheme}://{origin}/favicon.ico')
+    for name in hosts:
         add(f'https://icons.duckduckgo.com/ip3/{name}.ico')
-        add(f'https://www.google.com/s2/favicons?domain={name}&sz=128')
-    scheme = parsed.scheme or 'https'
-    add(f'{scheme}://{host}/favicon.ico')
-    add(f'{scheme}://{host}/favicon.png')
-    add(f'{scheme}://{host}/apple-touch-icon.png')
     return urls
 
 
@@ -68,11 +104,6 @@ def favicon_for_url(url):
 
 def default_folder_color():
     return FOLDER_COLORS[0]
-
-
-MULTI_TLDS = {
-    'co.uk', 'com.au', 'co.jp', 'com.br', 'co.nz', 'com.mx', 'co.in', 'com.ar',
-}
 
 
 def title_from_url(url):

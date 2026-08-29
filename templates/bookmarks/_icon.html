@@ -3,6 +3,7 @@
 <img src="{{ icons.0 }}" alt="" draggable="false" class="{{ img_class }}"
      data-icons="{% for url in icons %}{{ url }}{% if not forloop.last %}||{% endif %}{% endfor %}"
      data-icon-i="0"
+     decoding="async"
      onerror="iMarksIconFail(this)"
      onload="iMarksIconCheck(this)">
 <span class="hidden {{ fallback_class }}">{{ letter }}</span>
