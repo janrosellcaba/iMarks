@@ -105,7 +105,7 @@ class BookmarkViewTests(TestCase):
         self.other = User.objects.create_user('other', password='secret')
         self.client.login(username='jan', password='secret')
 
-    def test_home_shows_all_bookmarks_including_foldered(self):
+    def test_home_keeps_folders_closed(self):
         folder = Folder.objects.create(user=self.user, name='Dev', color='#bae1ff')
         Bookmark.objects.create(user=self.user, title='Mine', url='https://example.com')
         Bookmark.objects.create(
@@ -117,9 +117,42 @@ class BookmarkViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Mine')
-        self.assertContains(response, 'Django')
-        self.assertContains(response, '#bae1ff')
+        self.assertContains(response, 'Dev')
+        self.assertNotContains(response, 'Django')
         self.assertNotContains(response, 'Theirs')
+
+        opened = self.client.get(reverse('folder', args=[folder.pk]))
+        self.assertContains(opened, 'Django')
+        self.assertContains(opened, 'Dev')
+
+    def test_edit_bookmark_and_folder(self):
+        folder = Folder.objects.create(user=self.user, name='Dev', color='#bae1ff')
+        bookmark = Bookmark.objects.create(
+            user=self.user, title='Django', url='https://docs.djangoproject.com/',
+        )
+        self.client.post(reverse('edit_bookmark', args=[bookmark.pk]), {
+            'title': 'Docs',
+            'url': 'https://docs.djangoproject.com/',
+            'folder': folder.pk,
+        })
+        bookmark.refresh_from_db()
+        self.assertEqual(bookmark.title, 'Docs')
+        self.assertEqual(bookmark.folder, folder)
+
+        self.client.post(reverse('edit_folder', args=[folder.pk]), {
+            'name': 'Work',
+            'color': '#ff00aa',
+        })
+        folder.refresh_from_db()
+        self.assertEqual(folder.name, 'Work')
+        self.assertEqual(folder.color, '#ff00aa')
+
+    def test_manage_lists_items(self):
+        Folder.objects.create(user=self.user, name='Dev', color='#bae1ff')
+        Bookmark.objects.create(user=self.user, title='Mine', url='https://example.com')
+        response = self.client.get(reverse('manage'))
+        self.assertContains(response, 'Dev')
+        self.assertContains(response, 'Mine')
 
     def test_add_bookmark_creates_row_and_favicon(self):
         response = self.client.post(reverse('add_bookmark'), {
@@ -132,6 +165,17 @@ class BookmarkViewTests(TestCase):
         self.assertEqual(bookmark.user, self.user)
         self.assertIsNone(bookmark.folder)
         self.assertIn('djangoproject.com', bookmark.icon_url)
+
+    def test_add_bookmark_assumes_https(self):
+        response = self.client.post(reverse('add_bookmark'), {
+            'title': 'Bitwarden',
+            'url': 'bitwarden.com',
+        })
+
+        self.assertRedirects(response, reverse('home'))
+        bookmark = Bookmark.objects.get(title='Bitwarden')
+        self.assertEqual(bookmark.url, 'https://bitwarden.com')
+        self.assertIn('bitwarden.com', bookmark.icon_url)
 
     def test_duplicate_url_is_rejected(self):
         Bookmark.objects.create(user=self.user, title='One', url='https://example.com/')

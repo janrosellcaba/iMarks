@@ -1,37 +1,87 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.db.models import Count
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import BookmarkForm, ExtractForm, FolderForm, RegistrationForm
-from .importers import favicon_for_url, import_export, random_pastel_hex
+from .importers import favicon_for_url, import_export
 from .models import Bookmark, Folder
 
 
+def after_bookmark_save(bookmark):
+    if bookmark.folder_id:
+        return redirect('folder', bookmark.folder_id)
+    return redirect('home')
+
+
 @login_required
-def home(request):
-    bookmarks = (
-        Bookmark.objects
-        .filter(user=request.user)
-        .select_related('folder')
-    )
-    return render(request, 'bookmarks/home.html', {'bookmarks': bookmarks})
+def home(request, folder_id=None):
+    folder = None
+    folders = []
+    if folder_id:
+        folder = get_object_or_404(Folder, pk=folder_id, user=request.user)
+        bookmarks = folder.bookmarks.select_related('folder')
+    else:
+        folders = (
+            Folder.objects
+            .filter(user=request.user)
+            .prefetch_related('bookmarks')
+        )
+        bookmarks = Bookmark.objects.filter(user=request.user, folder__isnull=True)
+    return render(request, 'bookmarks/home.html', {
+        'folder': folder,
+        'folders': folders,
+        'bookmarks': bookmarks,
+    })
 
 
 @login_required
 def add_bookmark(request):
+    initial = {}
+    preset = request.GET.get('folder')
+    if preset:
+        owned = Folder.objects.filter(pk=preset, user=request.user).first()
+        if owned:
+            initial['folder'] = owned
     if request.method == 'POST':
         form = BookmarkForm(request.POST, user=request.user)
         if form.is_valid():
             bookmark = form.save(commit=False)
             bookmark.user = request.user
-            if not bookmark.icon_url:
-                bookmark.icon_url = favicon_for_url(bookmark.url)
+            bookmark.icon_url = favicon_for_url(bookmark.url)
             bookmark.save()
-            return redirect('home')
+            return after_bookmark_save(bookmark)
     else:
-        form = BookmarkForm(user=request.user)
-    return render(request, 'bookmarks/add_bookmark.html', {'form': form})
+        form = BookmarkForm(user=request.user, initial=initial)
+    return render(request, 'bookmarks/bookmark_form.html', {
+        'form': form,
+        'bookmark': None,
+    })
+
+
+@login_required
+def edit_bookmark(request, pk):
+    bookmark = get_object_or_404(Bookmark, pk=pk, user=request.user)
+    if request.method == 'POST':
+        if request.POST.get('delete'):
+            folder_id = bookmark.folder_id
+            bookmark.delete()
+            if folder_id:
+                return redirect('folder', folder_id)
+            return redirect('manage')
+        form = BookmarkForm(request.POST, user=request.user, instance=bookmark)
+        if form.is_valid():
+            bookmark = form.save(commit=False)
+            bookmark.icon_url = favicon_for_url(bookmark.url)
+            bookmark.save()
+            return redirect('manage')
+    else:
+        form = BookmarkForm(user=request.user, instance=bookmark)
+    return render(request, 'bookmarks/bookmark_form.html', {
+        'form': form,
+        'bookmark': bookmark,
+    })
 
 
 @login_required
@@ -41,12 +91,41 @@ def add_folder(request):
         if form.is_valid():
             folder = form.save(commit=False)
             folder.user = request.user
-            folder.color = random_pastel_hex()
             folder.save()
             return redirect('home')
     else:
         form = FolderForm()
-    return render(request, 'bookmarks/add_folder.html', {'form': form})
+    return render(request, 'bookmarks/folder_form.html', {
+        'form': form,
+        'folder': None,
+    })
+
+
+@login_required
+def edit_folder(request, pk):
+    folder = get_object_or_404(Folder, pk=pk, user=request.user)
+    if request.method == 'POST':
+        if request.POST.get('delete'):
+            folder.delete()
+            return redirect('manage')
+        form = FolderForm(request.POST, instance=folder)
+        if form.is_valid():
+            form.save()
+            return redirect('manage')
+    else:
+        form = FolderForm(instance=folder)
+    return render(request, 'bookmarks/folder_form.html', {
+        'form': form,
+        'folder': folder,
+    })
+
+
+@login_required
+def manage(request):
+    return render(request, 'bookmarks/manage.html', {
+        'folders': Folder.objects.filter(user=request.user).annotate(bookmark_count=Count('bookmarks')),
+        'bookmarks': Bookmark.objects.filter(user=request.user).select_related('folder'),
+    })
 
 
 @login_required

@@ -1,7 +1,11 @@
+from urllib.parse import urlparse
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
+from django.core.validators import URLValidator
 
+from .importers import random_pastel_hex
 from .models import Bookmark, Folder
 
 INPUT_CLASS = (
@@ -11,11 +15,12 @@ INPUT_CLASS = (
 
 
 class BookmarkForm(forms.ModelForm):
-    url = forms.URLField(
-        assume_scheme='https',
-        widget=forms.URLInput(attrs={
+    url = forms.CharField(
+        widget=forms.TextInput(attrs={
             'class': INPUT_CLASS,
-            'placeholder': 'https://',
+            'placeholder': 'example.com',
+            'inputmode': 'url',
+            'autocomplete': 'url',
         }),
     )
 
@@ -42,23 +47,48 @@ class BookmarkForm(forms.ModelForm):
             self.fields['folder'].queryset = Folder.objects.none()
 
     def clean_url(self):
-        url = self.cleaned_data['url']
-        if self.user and Bookmark.objects.filter(user=self.user, url=url).exists():
-            raise forms.ValidationError('You already saved this URL.')
+        url = self.cleaned_data['url'].strip()
+        if url and not urlparse(url).scheme:
+            url = f'https://{url}'
+        URLValidator()(url)
+        if self.user:
+            existing = Bookmark.objects.filter(user=self.user, url=url)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise forms.ValidationError('You already saved this URL.')
         return url
 
 
 class FolderForm(forms.ModelForm):
     class Meta:
         model = Folder
-        fields = ['name']
+        fields = ['name', 'color']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': INPUT_CLASS,
                 'placeholder': 'Folder name',
                 'autofocus': True,
             }),
+            'color': forms.TextInput(attrs={
+                'type': 'color',
+                'class': 'mt-1 h-12 w-full cursor-pointer rounded-2xl border-0 bg-white/90 p-1',
+            }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['color'].required = False
+        if not self.is_bound and not self.initial.get('color') and not (self.instance and self.instance.pk and self.instance.color):
+            self.initial['color'] = random_pastel_hex()
+
+    def clean_color(self):
+        value = (self.cleaned_data.get('color') or '').strip()
+        if not value:
+            value = self.initial.get('color') or random_pastel_hex()
+        if not (value.startswith('#') and len(value) == 7):
+            raise forms.ValidationError('Pick a color.')
+        return value
 
 
 class ExtractForm(forms.Form):

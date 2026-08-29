@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Add bookmark · iMarks{% endblock %}
+{% block title %}{% if bookmark %}Edit bookmark{% else %}Add bookmark{% endif %} · iMarks{% endblock %}
 
 {% block content %}
 <div class="mx-auto flex min-h-screen max-w-md flex-col px-4 py-6">
     <header class="mb-8 flex items-center justify-between">
-        <h1 class="text-xl font-semibold">Add bookmark</h1>
-        <a href="{% url 'home' %}" class="text-sm text-white/80 hover:text-white">Cancel</a>
+        <h1 class="text-xl font-semibold">{% if bookmark %}Edit bookmark{% else %}Add bookmark{% endif %}</h1>
+        <a href="{% if bookmark %}{% url 'manage' %}{% else %}{% url 'home' %}{% endif %}" class="text-sm text-white/80 hover:text-white">Cancel</a>
     </header>
     <form method="post" class="space-y-4">
         {% csrf_token %}
@@ -27,6 +27,10 @@
             {{ form.folder.errors }}
         </label>
         <button type="submit" class="w-full rounded-2xl bg-white py-3 font-semibold text-slate-900">Save</button>
+        {% if bookmark %}
+            <button type="submit" name="delete" value="1" class="w-full rounded-2xl bg-white/10 py-3 font-semibold text-rose-200"
+                onclick="return confirm('Delete this bookmark?')">Delete</button>
+        {% endif %}
     </form>
 </div>
 {% endblock %}

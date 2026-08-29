@@ -23,7 +23,7 @@ def favicon_for_url(url):
     hostname = urlparse(url).hostname
     if not hostname:
         return ''
-    return f'https://www.google.com/s2/favicons?domain={hostname}&sz=128'
+    return f'https://www.google.com/s2/favicons?domain={hostname}&sz=256'
 
 
 def random_pastel_hex():
